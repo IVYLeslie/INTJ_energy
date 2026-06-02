@@ -32,9 +32,9 @@ alter table public.user_state add column if not exists prefs jsonb not null defa
 1. 打开 **https://resend.com** → 注册（可用 GitHub）。
 2. 左侧 **API Keys** → **Create API Key** → 复制 `re_...` 开头的 key（只显示一次，存好）。
 3. **关于发件域名（重要）**：
-   - **快速测试**：Resend 默认发件地址 `onboarding@resend.dev` **只能发到你注册 Resend 用的那个邮箱**。先用它验证整条链路没问题。
-   - **正式发给所有用户**：左侧 **Domains** → **Add Domain**，填一个你拥有的域名（如 `yourname.com`），按提示去域名商加几条 DNS 记录验证。验证通过后，把发件地址设成 `INTJ能量板 <noreply@yourname.com>`。
-   - （没有自己的域名就先用测试模式，只有你自己能收到。）
+   - **快速测试（不绑域名）**：**不要**点 “Add domain”。直接用 Resend 自带的 `onboarding@resend.dev` 发，无需验证任何域名——唯一限制：**只能发到你注册 Resend 的那个邮箱**。先用它把整条链路跑通、确认自己能收到。
+   - ⚠️ **不能用 `xxx.vercel.app` 当发件域名**：`vercel.app` 是 Vercel 的公共域名、不是你拥有的，Resend 会拒绝（“We don't allow free public domains”）。同理 `github.io`、`netlify.app` 等也不行。
+   - **正式发给所有用户**：你需要**自己拥有一个域名**（任意一个，便宜的如 Cloudflare Registrar / Namecheap / 阿里云，约几~几十元/年）。左侧 **Domains → Add Domain** 填你买的域名（如 `yourname.com`），按提示去域名商后台加几条 DNS 记录（SPF/DKIM/DMARC）验证。通过后把发件地址设成 `INTJ能量板 <noreply@yourname.com>`。已有任何域名也可直接用（含子域名 `mail.yourname.com`）。
 
 ## 第 3 步：部署 Edge Function（用控制台，免装 CLI）
 
