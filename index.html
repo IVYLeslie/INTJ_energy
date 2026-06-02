@@ -1441,7 +1441,7 @@ function Stats({ energy, tasks, logMap = {} }) {
   const best = data.reduce((a, b) => b.net > a.net ? b : a);
   // category distribution (gain only)
   const catAgg = {};
-  tasks.forEach(t => { if (t.type === 'gain') catAgg[t.cat] = (catAgg[t.cat] || 0) + t.pts; });
+  tasks.forEach(t => { if (t.done && t.type === 'gain') catAgg[t.cat] = (catAgg[t.cat] || 0) + t.pts; });
   const catList = Object.entries(catAgg).sort((a, b) => b[1] - a[1]);
   const catMax = Math.max(...catList.map(c => c[1]), 1);
 
@@ -1474,7 +1474,7 @@ function Stats({ energy, tasks, logMap = {} }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {catList.filter(([k]) => cmap[k]).map(([k, v]) => (
               <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 56, fontSize: 13, fontWeight: 600, color: 'var(--ink-2)' }}>{cmap[k].label}</div>
+                <div style={{ minWidth: 56, flexShrink: 0, whiteSpace: 'nowrap', fontSize: 13, fontWeight: 600, color: 'var(--ink-2)' }}>{cmap[k].label}</div>
                 <div className="bar-track" style={{ flex: 1 }}><div className="bar-fill" style={{ width: `${v / catMax * 100}%`, background: cmap[k].color }} /></div>
                 <div style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-disp)', fontWeight: 600, color: cmap[k].color }}>+{v}</div>
               </div>
@@ -1750,7 +1750,7 @@ function CatBreakdown({ cat }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
       {list.map(([k, v]) => (
         <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 56, fontSize: 13, fontWeight: 600, color: 'var(--ink-2)' }}>{map[k].label}</div>
+          <div style={{ minWidth: 56, flexShrink: 0, whiteSpace: 'nowrap', fontSize: 13, fontWeight: 600, color: 'var(--ink-2)' }}>{map[k].label}</div>
           <div className="bar-track" style={{ flex: 1 }}><div className="bar-fill" style={{ width: `${v / max * 100}%`, background: map[k].color }} /></div>
           <div style={{ width: 44, textAlign: 'right', fontFamily: 'var(--font-disp)', fontWeight: 600, color: map[k].color }}>+{v}</div>
         </div>
