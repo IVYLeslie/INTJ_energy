@@ -1066,8 +1066,9 @@ const barRow = { display: 'flex', justifyContent: 'space-between', fontSize: 13,
 
 /* -------- 顶栏（含方案切换） -------- */
 function HomeTop({ variant, setVariant, energy }) {
-  const hour = 14;
+  const hour = new Date().getHours();
   const hello = hour < 11 ? '早上好' : hour < 18 ? '下午好' : '晚上好';
+  const weekday = WEEKDAY_LABELS[new Date(TODAY.y, TODAY.m - 1, TODAY.d).getDay()];
   const mood = energyMood(energy.current);
   return (
     <div style={{ marginBottom: 26 }}>
@@ -1076,7 +1077,7 @@ function HomeTop({ variant, setVariant, energy }) {
           <div className="greeting">{hello}，今天想怎么过？</div>
           <div className="subgreet">{mood.msg}</div>
         </div>
-        <div className="date-pill">5 月 29 日 · 周五</div>
+        <div className="date-pill">{TODAY.m} 月 {TODAY.d} 日 · 周{weekday}</div>
       </div>
       <div className="seg">
         {[['orb','①  能量星球'],['liquid','②  液态能量'],['dash','③  能量仪表盘']].map(([k, l]) => (
