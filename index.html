@@ -1626,7 +1626,14 @@ function Achievements({ logMap = {}, tasks = [] }) {
 /* ============================================================
    设置
    ============================================================ */
-function Settings({ initial, setInitial }) {
+function Settings({ initial, setInitial, prefs, setPrefs }) {
+  // 开启「通知类」偏好时，按需申请浏览器通知权限
+  const setPref = (key, notify) => (v) => {
+    if (v && notify && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      try { Notification.requestPermission(); } catch {}
+    }
+    setPrefs(p => ({ ...p, [key]: v }));
+  };
   return (
     <div className="fade-page">
       <div className="topbar"><div><div className="greeting">设置</div><div className="subgreet">把能量系统调成最适合你的样子。</div></div></div>
@@ -1654,20 +1661,22 @@ function Settings({ initial, setInitial }) {
 
       <div className="card card-pad">
         <div className="card-title" style={{ marginBottom: 14 }}>偏好</div>
-        <ToggleRow label="完成任务时播放能量动效" defOn />
-        <ToggleRow label="每晚 21:00 提醒回顾今日能量" defOn />
-        <ToggleRow label="周日发送本周能量小结" />
+        <ToggleRow label="完成任务时播放能量动效" value={prefs.anim} onChange={setPref('anim', false)} />
+        <ToggleRow label="每晚 21:00 提醒回顾今日能量" hint="通过浏览器通知提醒，需授权且网页保持打开" value={prefs.nightReminder} onChange={setPref('nightReminder', true)} />
+        <ToggleRow label="周日发送本周能量小结" hint="周日以浏览器通知推送，需授权且网页保持打开" value={prefs.weeklySummary} onChange={setPref('weeklySummary', true)} last />
       </div>
     </div>
   );
 }
-function ToggleRow({ label, defOn }) {
-  const [on, setOn] = React.useState(!!defOn);
+function ToggleRow({ label, hint, value, onChange, last }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
-      <span style={{ fontSize: 14, color: 'var(--ink)' }}>{label}</span>
-      <button onClick={() => setOn(!on)} style={{ width: 46, height: 27, borderRadius: 999, background: on ? 'var(--gain)' : 'var(--line-2)', position: 'relative', transition: 'background .2s' }}>
-        <span style={{ position: 'absolute', top: 3, left: on ? 22 : 3, width: 21, height: 21, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'left .2s' }} />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: last ? 'none' : '1px solid var(--line)' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 14, color: 'var(--ink)' }}>{label}</div>
+        {hint && <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 3, lineHeight: 1.4 }}>{hint}</div>}
+      </div>
+      <button onClick={() => onChange(!value)} style={{ flexShrink: 0, width: 46, height: 27, borderRadius: 999, background: value ? 'var(--gain)' : 'var(--line-2)', position: 'relative', transition: 'background .2s' }}>
+        <span style={{ position: 'absolute', top: 3, left: value ? 22 : 3, width: 21, height: 21, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'left .2s' }} />
       </button>
     </div>
   );
@@ -2005,6 +2014,7 @@ const LS = {
   del(k) { try { localStorage.removeItem(k); } catch {} },
 };
 const clampInit = (v) => Math.min(50, Math.max(10, typeof v === 'number' ? v : 30));
+const DEFAULT_PREFS = { anim: true, nightReminder: true, weeklySummary: false };
 
 /* ============================================================
    ☁  云端：Supabase 客户端 + 每用户整份状态读写
@@ -2078,6 +2088,7 @@ function App({ session }) {
   const [cats, setCats]       = useState(() => { const c = LS.get(K('cats'), DEFAULT_CATEGORIES); return Array.isArray(c) && c.length ? c : DEFAULT_CATEGORIES; });
   const [logMap, setLogMap]   = useState(() => LS.get(K('log'), {}));      // { 'y-m-d': [完成任务...] }
   const [lastDate, setLastDate] = useState(() => LS.get(K('lastDate'), null)); // ISO 'YYYY-MM-DD'
+  const [prefs, setPrefs]     = useState(() => ({ ...DEFAULT_PREFS, ...(LS.get(K('prefs'), {}) || {}) }));
   const [route, setRoute]     = useState(() => { const r = LS.get('et_route', 'today'); return r === 'review' ? 'summary' : r; });
   const [variant, setVariant] = useState(() => LS.get('et_variant', 'orb'));
   const [modal, setModal]     = useState(null);   // null | {} (new) | task (edit)
@@ -2147,8 +2158,59 @@ function App({ session }) {
   useEffect(() => { LS.set(K('cats'), cats); }, [cats]);
   useEffect(() => { LS.set(K('log'), logMap); }, [logMap]);
   useEffect(() => { LS.set(K('lastDate'), lastDate); }, [lastDate]);
+  useEffect(() => { LS.set(K('prefs'), prefs); }, [prefs]);
   useEffect(() => LS.set('et_route', route), [route]);
   useEffect(() => LS.set('et_variant', variant), [variant]);
+
+  /* ---- 偏好的真实生效 ---- */
+  // 1) 动效开关：用 ref 让（已记忆的）onToggle 读到最新值
+  const animRef = useRef(prefs.anim);
+  useEffect(() => { animRef.current = prefs.anim; }, [prefs.anim]);
+  // 实时数据快照，供通知用（避免通知 effect 频繁重订阅）
+  const liveRef = useRef({});
+  liveRef.current = { tasks, logMap };
+
+  // 2) 每晚 21:00 提醒（浏览器通知，仅在网页打开时生效）
+  useEffect(() => {
+    if (!prefs.nightReminder || typeof Notification === 'undefined') return;
+    const check = () => {
+      if (Notification.permission !== 'granted') return;
+      const now = new Date();
+      if (now.getHours() === 21 && now.getMinutes() < 10) {
+        const k = ymdToIso(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        if (LS.get('et_lastReminder', null) !== k) {
+          try { new Notification('INTJ能量板 · 晚间回顾 🌙', { body: '该回顾今天的能量啦，看看自己今天过得怎么样～' }); } catch {}
+          LS.set('et_lastReminder', k);
+        }
+      }
+    };
+    check();
+    const t = setInterval(check, 60000);
+    return () => clearInterval(t);
+  }, [prefs.nightReminder]);
+
+  // 3) 周日发送本周能量小结（浏览器通知，仅在网页打开时生效）
+  useEffect(() => {
+    if (!prefs.weeklySummary || typeof Notification === 'undefined') return;
+    const check = () => {
+      if (Notification.permission !== 'granted') return;
+      const now = new Date();
+      if (now.getDay() !== 0) return; // 仅周日
+      const k = 'wk-' + ymdToIso(now.getFullYear(), now.getMonth() + 1, now.getDate());
+      if (LS.get('et_lastWeekly', null) === k) return;
+      const { tasks: lt, logMap: lm } = liveRef.current;
+      let net = 0, days = 0;
+      recentDays(7).forEach(dd => {
+        const ts = dd.isToday ? lt.filter(t => t.done) : (lm[dd.key] || []);
+        if (ts.length) { net += aggTasks(ts).net; days++; }
+      });
+      try { new Notification('INTJ能量板 · 本周小结 📊', { body: `这一周记录了 ${days} 天，净能量 ${net >= 0 ? '+' : ''}${net}。新的一周，继续加油～` }); } catch {}
+      LS.set('et_lastWeekly', k);
+    };
+    check();
+    const t = setInterval(check, 60000);
+    return () => clearInterval(t);
+  }, [prefs.weeklySummary]);
 
   /* ---- 防抖云端同步（user_state）---- */
   useEffect(() => {
@@ -2181,6 +2243,7 @@ function App({ session }) {
   const energy = computeEnergy(tasks, initial);
 
   const fireSpark = (task, e) => {
+    if (!animRef.current) return;   // 「完成任务时播放能量动效」关闭则不迸粒子
     const id = Date.now() + Math.random();
     const x = e ? e.clientX : window.innerWidth / 2;
     const y = e ? e.clientY : 120;
@@ -2220,7 +2283,7 @@ function App({ session }) {
           {route === 'stats'    && <Stats energy={energy} tasks={tasks} logMap={logMap} />}
           {route === 'summary'  && <Summary energy={energy} tasks={tasks} logMap={logMap} />}
           {route === 'achieve'  && <Achievements logMap={logMap} tasks={tasks} />}
-          {route === 'settings' && <Settings initial={initial} setInitial={setInitial} />}
+          {route === 'settings' && <Settings initial={initial} setInitial={setInitial} prefs={prefs} setPrefs={setPrefs} />}
         </div>
       </main>
 
