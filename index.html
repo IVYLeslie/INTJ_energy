@@ -2031,9 +2031,15 @@ async function saveRemoteState(userId, state) {
   if (error) { console.warn('[sync] save 失败', error.message); throw error; }
 }
 async function loadRemoteState(userId) {
-  const { data, error } = await SB.from('user_state').select('tasks, cats, initial, last_date').eq('user_id', userId).maybeSingle();
+  // select('*') 对「prefs 列还没建」也安全（缺列就是不返回该字段，不报错）
+  const { data, error } = await SB.from('user_state').select('*').eq('user_id', userId).maybeSingle();
   if (error) { console.warn('[sync] load 失败', error.message); throw error; }
   return data;
+}
+async function saveRemotePrefs(userId, prefs) {
+  // 单独更新 prefs 列：即使列还没建好（报错）也不影响其它数据保存
+  const { error } = await SB.from('user_state').update({ prefs }).eq('user_id', userId);
+  if (error) console.warn('[sync] prefs 保存失败（可能还没建 prefs 列，见 backend/README）:', error.message);
 }
 
 /* daily_log：每个已结算的日期一行 */
@@ -2105,7 +2111,7 @@ function App({ session }) {
     if (cloud) setSync('loading');
     (async () => {
       try {
-        let curTasks, curCats, curInitial, curLast, log;
+        let curTasks, curCats, curInitial, curLast, curPrefs = null, log;
         if (cloud) {
           const remote = await loadRemoteState(userId);
           log = await loadRemoteLog(userId);
@@ -2114,6 +2120,7 @@ function App({ session }) {
             curCats    = Array.isArray(remote.cats) && remote.cats.length ? remote.cats : DEFAULT_CATEGORIES;
             curInitial = clampInit(remote.initial);
             curLast    = remote.last_date || null;
+            curPrefs   = remote.prefs && typeof remote.prefs === 'object' ? remote.prefs : null;
           } else {
             curTasks = []; curCats = DEFAULT_CATEGORIES; curInitial = clampInit(initial); curLast = null; // 首次登录：干净起步
           }
@@ -2130,6 +2137,7 @@ function App({ session }) {
         }
         if (!alive) return;
         setTasks(curTasks); setCats(curCats); setInitial(curInitial); setLogMap(log); setLastDate(TODAY_ISO);
+        if (curPrefs) setPrefs({ ...DEFAULT_PREFS, ...curPrefs });   // 云端偏好覆盖本地
         if (cloud) await saveRemoteState(userId, { tasks: curTasks, cats: curCats, initial: curInitial, lastDate: TODAY_ISO });
         hydrated.current = true;
         setSync(cloud ? 'synced' : 'local');
@@ -2161,6 +2169,15 @@ function App({ session }) {
   useEffect(() => { LS.set(K('prefs'), prefs); }, [prefs]);
   useEffect(() => LS.set('et_route', route), [route]);
   useEffect(() => LS.set('et_variant', variant), [variant]);
+
+  /* ---- 偏好同步到云端（后端发提醒邮件时要读它）---- */
+  const prefsTimer = useRef(null);
+  useEffect(() => {
+    if (!cloud || !hydrated.current) return;
+    clearTimeout(prefsTimer.current);
+    prefsTimer.current = setTimeout(() => { saveRemotePrefs(userId, prefs); }, 700);
+    return () => clearTimeout(prefsTimer.current);
+  }, [prefs, cloud]);
 
   /* ---- 偏好的真实生效 ---- */
   // 1) 动效开关：用 ref 让（已记忆的）onToggle 读到最新值
