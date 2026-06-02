@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INTJ能量板 · Energy To-Do</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+  <style>
+/* ============================================================
+   能量待办 · Energy To-Do  —  Design Tokens & Base
+   暖奶油底 + 翠绿(增能)/琥珀(能量)/珊瑚(耗能)，活力明亮、温柔陪伴
+   ============================================================ */
+
+:root {
+  /* --- surfaces (macaron soft) --- */
+  --bg:        #F7F1F3;   /* soft pink-cream */
+  --bg-2:      #EFE6EB;
+  --surface:   #FFFFFF;
+  --surface-2: #FCF8FA;
+  --line:      #EFE3EA;
+  --line-2:    #E5D6DF;
+
+  /* --- ink --- */
+  --ink:    #4A3F46;
+  --ink-2:  #8A7C84;
+  --ink-3:  #B3A6AE;
+
+  /* --- energy / gain (macaron pistachio) --- */
+  --gain:      #5FB892;
+  --gain-2:    #A6E0C6;
+  --gain-3:    #C7EEDC;
+  --gain-tint: #E9F7F0;
+
+  /* --- energy meter (macaron lemon) --- */
+  --amber:     #E7B255;
+  --amber-2:   #F6DCA0;
+  --amber-tint:#FBF1DA;
+
+  /* --- drain (macaron rose) --- */
+  --drain:     #EB8299;
+  --drain-2:   #F4B2C1;
+  --drain-tint:#FBE8EE;
+
+  /* --- macaron category swatches (categories now carry their own hex) --- */
+  --c-study:  #B7BFEE;
+  --c-move:   #A6E0C8;
+  --c-social: #F3A8BE;
+  --c-hobby:  #F4DC97;
+  --c-life:   #C7E6A2;
+  --c-work:   #A7D6EC;
+  --c-chore:  #D7C3AE;
+
+  /* --- radii --- */
+  --r-xs: 10px;
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 28px;
+  --r-xl: 36px;
+  --r-pill: 999px;
+
+  /* --- shadow (soft, lightly tinted) --- */
+  --sh-sm: 0 2px 8px rgba(120,80,100,0.06);
+  --sh-md: 0 8px 24px rgba(120,80,100,0.09);
+  --sh-lg: 0 18px 48px rgba(120,80,100,0.14);
+  --sh-glow: 0 12px 36px rgba(95,184,146,0.32);
+
+  --font-disp: 'Fredoka', 'Noto Sans SC', sans-serif;
+  --font-body: 'Noto Sans SC', 'Fredoka', sans-serif;
+  --font-round: 'ZCOOL KuaiLe', 'Fredoka', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+#root { height: 100vh; }
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, textarea, select { font-family: inherit; color: inherit; }
+::selection { background: var(--gain-3); }
+
+/* scrollbar */
+.scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+.scroll::-webkit-scrollbar-thumb:hover { background: var(--ink-3); background-clip: padding-box; }
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+.app {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  height: 100vh;
+  background:
+    radial-gradient(900px 600px at 12% -8%, rgba(166,224,200,0.30), transparent 60%),
+    radial-gradient(820px 600px at 105% 4%, rgba(243,168,190,0.26), transparent 55%),
+    radial-gradient(700px 600px at 60% 110%, rgba(183,191,238,0.22), transparent 55%),
+    var(--bg);
+}
+
+/* ---- sidebar ---- */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 18px;
+  gap: 6px;
+  border-right: 1px solid var(--line);
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(8px);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 4px 10px 22px;
+}
+.brand-mark {
+  width: 38px; height: 38px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 38% 32%, var(--gain-3), var(--gain) 78%);
+  box-shadow: 0 6px 16px rgba(27,158,115,0.35), inset 0 2px 5px rgba(255,255,255,0.5);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.brand-mark::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.9); margin: -10px 0 0 -8px; box-shadow: 0 0 8px rgba(255,255,255,0.8); }
+.brand-name { font-family: var(--font-round); font-size: 19px; color: var(--ink); letter-spacing: .5px; }
+.brand-sub { font-size: 11px; color: var(--ink-3); letter-spacing: 2px; font-family: var(--font-disp); }
+
+.nav-item {
+  display: flex; align-items: center; gap: 13px;
+  padding: 11px 14px;
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  font-size: 15px; font-weight: 500;
+  transition: background .18s, color .18s, transform .12s;
+  text-align: left; width: 100%;
+}
+.nav-item:hover { background: rgba(255,255,255,0.7); color: var(--ink); }
+.nav-item.active { background: var(--ink); color: #fff; box-shadow: var(--sh-sm); }
+.nav-item.active .nav-ic { opacity: 1; }
+.nav-ic { width: 20px; height: 20px; opacity: .8; flex-shrink: 0; }
+
+.side-spacer { flex: 1; }
+
+.side-mini {
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-sm);
+}
+.side-mini-row { display: flex; align-items: center; gap: 10px; }
+.side-mini-val { font-family: var(--font-disp); font-weight: 600; font-size: 22px; line-height: 1; }
+.side-mini-lab { font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+
+/* ---- main ---- */
+.main { overflow-y: auto; overflow-x: hidden; height: 100vh; }
+.main-inner { max-width: 1080px; margin: 0 auto; padding: 38px 48px 80px; }
+
+.topbar { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 30px; }
+.greeting { font-family: var(--font-round); font-size: 30px; color: var(--ink); }
+.subgreet { color: var(--ink-2); font-size: 14px; margin-top: 6px; }
+.date-pill { font-family: var(--font-disp); font-size: 13px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); padding: 8px 15px; border-radius: var(--r-pill); box-shadow: var(--sh-sm); }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 20px;
+  border-radius: var(--r-pill);
+  font-weight: 600; font-size: 14px;
+  transition: transform .12s, box-shadow .18s, background .18s, opacity .18s;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: var(--ink); color: #fff; box-shadow: var(--sh-sm); }
+.btn-primary:hover { box-shadow: var(--sh-md); }
+.btn-gain { background: var(--gain); color: #fff; box-shadow: var(--sh-glow); }
+.btn-gain:hover { background: var(--gain); filter: brightness(1.05); }
+.btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line-2); }
+.btn-ghost:hover { background: var(--surface-2); border-color: var(--ink-3); }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+.btn-lg { padding: 14px 26px; font-size: 15px; }
+
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-sm); transition: transform .12s, box-shadow .18s; }
+.icon-btn:hover { box-shadow: var(--sh-md); transform: translateY(-1px); }
+.icon-btn:active { transform: scale(0.94); }
+
+/* ============================================================
+   CARD
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-sm);
+}
+.card-pad { padding: 24px; }
+.card-title { font-size: 16px; font-weight: 700; color: var(--ink); }
+.card-sub { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+
+/* ============================================================
+   CHIPS / TAGS
+   ============================================================ */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: var(--r-pill);
+  font-size: 12px; font-weight: 600;
+  background: var(--bg-2); color: var(--ink-2);
+}
+.chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.delta {
+  font-family: var(--font-disp); font-weight: 600;
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 11px; border-radius: var(--r-pill); font-size: 14px;
+}
+.delta-gain { color: var(--gain); background: var(--gain-tint); }
+.delta-drain { color: var(--drain); background: var(--drain-tint); }
+
+/* ============================================================
+   TASK ITEM
+   ============================================================ */
+.task {
+  display: flex; align-items: center; gap: 15px;
+  padding: 15px 18px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: transform .14s, box-shadow .18s, border-color .18s, opacity .25s;
+}
+.task:hover { box-shadow: var(--sh-md); transform: translateY(-2px); border-color: var(--line-2); }
+.task.done { opacity: 0.58; }
+.task.done .task-title { text-decoration: line-through; text-decoration-color: var(--ink-3); }
+
+.check {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 2.4px solid var(--line-2);
+  flex-shrink: 0; position: relative;
+  transition: border-color .18s, background .18s, transform .12s;
+}
+.check:hover { transform: scale(1.12); }
+.check.gain { border-color: var(--gain-2); }
+.check.drain { border-color: var(--drain-2); }
+.check.checked.gain { background: var(--gain); border-color: var(--gain); }
+.check.checked.drain { background: var(--drain); border-color: var(--drain); }
+.check.checked::after {
+  content: ""; position: absolute; left: 8px; top: 4px;
+  width: 6px; height: 11px; border: solid #fff; border-width: 0 2.6px 2.6px 0;
+  transform: rotate(42deg);
+}
+.task-body { flex: 1; min-width: 0; }
+.task-title { font-size: 15px; font-weight: 500; color: var(--ink); }
+.task-meta { display: flex; align-items: center; gap: 9px; margin-top: 6px; }
+.task-time { font-size: 12px; color: var(--ink-3); font-family: var(--font-disp); }
+.task-act:hover { background: var(--bg-2); color: var(--ink); }
+
+/* type stripe */
+.task-stripe { width: 4px; align-self: stretch; border-radius: 999px; flex-shrink: 0; }
+.stripe-gain { background: linear-gradient(var(--gain-2), var(--gain)); }
+.stripe-drain { background: linear-gradient(var(--drain-2), var(--drain)); }
+
+/* ============================================================
+   SEGMENTED CONTROL (home variant switcher)
+   ============================================================ */
+.seg {
+  display: inline-flex; padding: 4px; gap: 3px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-pill); box-shadow: var(--sh-sm);
+}
+.seg-btn {
+  padding: 8px 16px; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 600; color: var(--ink-2);
+  transition: background .18s, color .18s;
+  white-space: nowrap;
+}
+.seg-btn.active { background: var(--ink); color: #fff; }
+.seg-btn:not(.active):hover { color: var(--ink); }
+
+/* ============================================================
+   CATEGORY PICKER
+   ============================================================ */
+.cat-pick {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 12px; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line-2);
+  transition: border-color .15s, background .15s;
+}
+.cat-pick:hover { border-color: var(--ink-3); }
+.cat-pop {
+  position: absolute; z-index: 30; top: calc(100% + 6px); left: 0;
+  min-width: 160px; max-height: 240px; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md); box-shadow: var(--sh-lg);
+  padding: 6px; display: flex; flex-direction: column; gap: 2px;
+  animation: pop .18s ease;
+}
+.cat-pop-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 11px; border-radius: var(--r-sm);
+  font-size: 14px; font-weight: 500; color: var(--ink);
+  transition: background .14s;
+}
+.cat-pop-item:hover { background: var(--bg-2); }
+
+/* ============================================================
+   SUMMARY
+   ============================================================ */
+.link-back {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 14px; font-weight: 600; color: var(--ink-2);
+  padding: 8px 12px; border-radius: var(--r-pill);
+  transition: background .15s, color .15s;
+}
+.link-back:hover { background: var(--surface); color: var(--ink); }
+.month-card:hover { transform: translateY(-3px); box-shadow: var(--sh-md) !important; }
+
+/* ============================================================
+   ENERGY NUMBER
+   ============================================================ */
+.energy-num { font-family: var(--font-disp); font-weight: 600; line-height: 0.9; letter-spacing: -1px; }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.overlay {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(44,42,36,0.32);
+  backdrop-filter: blur(4px);
+  display: grid; place-items: center;
+  padding: 32px;
+  animation: fade .2s ease;
+}
+.modal {
+  width: 100%; max-width: 480px;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-lg);
+  overflow: hidden;
+  animation: pop .26s cubic-bezier(.2,.9,.3,1.3);
+}
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes pulseGlow { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes spinSlow { to { transform: rotate(360deg); } }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.rise { animation: rise .4s ease both; }
+
+/* floating energy particle burst */
+.spark {
+  position: absolute; font-family: var(--font-disp); font-weight: 700;
+  pointer-events: none; z-index: 5;
+  animation: sparkUp 1s ease-out forwards;
+}
+@keyframes sparkUp {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -64px) scale(1.1); }
+}
+
+/* progress bars */
+.bar-track { height: 10px; border-radius: 999px; background: var(--bg-2); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; transition: width .6s cubic-bezier(.3,.9,.3,1); }
+
+.fade-page { animation: rise .35s ease both; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- ============================================================
+       ☁  Supabase 云端配置  ——  部署前把下面两行换成你自己的
+       从 Supabase 控制台 → Project Settings → API 复制：
+         url     = Project URL（形如 https://xxxx.supabase.co）
+         anonKey = Project API keys 里的 "anon / public" key
+       不填也能用：会自动进入「本地模式」，数据只存本地浏览器。
+       详见同目录 DEPLOY.md。
+       ============================================================ -->
+  <script>
+    window.SUPABASE_CONFIG = {
+      url:     "https://pycucnouthitjypkcdnw.supabase.co",
+      anonKey: "sb_publishable_-A3LPTbOrdsRuP3HP-WhgA_ulUcQWZv",
+    };
+  </script>
+
+  <!-- ==== data.jsx ==== -->
+  <script type="text/babel" data-presets="react">
+/* ============================================================
+   data.jsx — 数据模型 · 能量计算 · 图标
+   ============================================================ */
+
+/* ---------- 马卡龙色板（用于分类自定义取色） ---------- */
+const MACARON_SWATCHES = [
+  '#F3A8BE', '#F6C4A0', '#F4DC97', '#C7E6A2', '#A6E0C8',
+  '#A7D6EC', '#B7BFEE', '#D7B8E8', '#EFB0C6', '#9FD9CE',
+  '#E8C7A0', '#C9C4B4',
+];
+
+/* ---------- 默认分类（用户可增/改/删） ---------- */
+const DEFAULT_CATEGORIES = [
+  { id: 'study',  label: '学习', color: '#B7BFEE' },
+  { id: 'move',   label: '运动', color: '#A6E0C8' },
+  { id: 'social', label: '社交', color: '#F3A8BE' },
+  { id: 'hobby',  label: '兴趣', color: '#F4DC97' },
+  { id: 'life',   label: '生活', color: '#C7E6A2' },
+  { id: 'work',   label: '工作', color: '#A7D6EC' },
+  { id: 'chore',  label: '琐事', color: '#D7C3AE' },
+];
+
+/* 分类 Context：list（有序）/ map（按 id 查）/ 增改删 */
+const CatCtx = React.createContext({
+  list: DEFAULT_CATEGORIES,
+  map: Object.fromEntries(DEFAULT_CATEGORIES.map(c => [c.id, c])),
+  addCat: () => {}, updateCat: () => {}, deleteCat: () => {},
+});
+
+/* ---------- 今日任务 ---------- */
+/* 新用户从空任务开始（保留默认分类作为可编辑的起步脚手架） */
+const SEED_TASKS = [];
+
+/* ---------- 成就 ---------- */
+const ACHIEVEMENTS = [
+  { id: 'a1', name: '能量满格',   desc: '单日能量达到上限',          icon: 'sun',    got: true,  tint: '#EFC15E' },
+  { id: 'a2', name: '晨型选手',   desc: '连续 5 天在 8 点前完成增能事', icon: 'sunrise', got: true,  tint: '#F0A878' },
+  { id: 'a3', name: '心流时刻',   desc: '单日完成 3 件「兴趣」增能事',  icon: 'spark',  got: true,  tint: '#9A86E0' },
+  { id: 'a4', name: '断舍离',     desc: '一天把耗能事控制在 10 以内',   icon: 'leaf',   got: false, tint: '#6FBF9A' },
+  { id: 'a5', name: '七日连续',   desc: '连续 7 天记录能量',          icon: 'flame',  got: false, tint: '#EE8FA3' },
+  { id: 'a6', name: '充电达人',   desc: '累计增能 1000',             icon: 'battery',got: false, tint: '#7FB7D8' },
+];
+
+/* ---------- 能量计算 ---------- */
+const SCALE_MAX = 80; // 能量球“满格”的参考刻度（初始能量上限 50 + 当日增能空间）
+
+function computeEnergy(tasks, initial) {
+  let gain = 0, drain = 0;
+  tasks.forEach(t => {
+    if (!t.done) return;
+    if (t.type === 'gain') gain += t.pts;
+    else drain += t.pts;
+  });
+  const current = initial + gain - drain;
+  return { current, gain, drain, net: gain - drain };
+}
+
+// 能量级别 → 马卡龙色 / 鼓励语
+function energyMood(current) {
+  const p = current;
+  if (p >= 68) return { key: 'high',  msg: '今天的你光芒四射 ✨',     hint: '记得也给自己留一点放空的时间。', c1: '#B8EBD2', c2: '#79CBA4' };
+  if (p >= 48) return { key: 'good',  msg: '保持这个节奏，很棒～',     hint: '你正在把时间花在让自己开心的事上。', c1: '#C7ECC0', c2: '#8FCF9E' };
+  if (p >= 29) return { key: 'mid',   msg: '能量还够，慢慢来 🌿',      hint: '挑一件喜欢的小事，给自己充会儿电。', c1: '#FBE6A6', c2: '#F0C97C' };
+  if (p >= 13) return { key: 'low',   msg: '有点累了，照顾好自己',     hint: '也许可以把耗能的事往后挪一挪。', c1: '#FBD7B0', c2: '#F0AE82' };
+  return            { key: 'empty', msg: '慢一点也没关系 🫧',        hint: '今天先休息，明天又是满格的一天。', c1: '#F8C2CE', c2: '#EE93A6' };
+}
+
+function fillPct(current) {
+  return Math.max(0, Math.min(1, current / SCALE_MAX));
+}
+
+/* ============================================================
+   日期与历史（真实日期；历史来自数据库 daily_log，不再生成假数据）
+   ============================================================ */
+const _now = new Date();
+const TODAY = { y: _now.getFullYear(), m: _now.getMonth() + 1, d: _now.getDate() };
+const MONTH_LABELS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
+
+const _pad = (n) => String(n).padStart(2, '0');
+function ymdToIso(y, m, d) { return `${y}-${_pad(m)}-${_pad(d)}`; }   // 数据库 date 列用
+function dKey(y, m, d) { return `${y}-${m}-${d}`; }                   // logMap 键（不补零）
+function isoToKey(iso) { const [y, m, d] = iso.split('-').map(Number); return `${y}-${m}-${d}`; }
+const TODAY_KEY = dKey(TODAY.y, TODAY.m, TODAY.d);
+const TODAY_ISO = ymdToIso(TODAY.y, TODAY.m, TODAY.d);
+
+function isFuture(y, m, d) {
+  if (y !== TODAY.y) return y > TODAY.y;
+  if (m !== TODAY.m) return m > TODAY.m;
+  return d > TODAY.d;
+}
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+function firstWeekday(y, m) { return new Date(y, m - 1, 1).getDay(); }
+
+/* 最近 n 天（含今天），用于「能量趋势」 */
+function recentDays(n) {
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const dt = new Date(TODAY.y, TODAY.m - 1, TODAY.d - i);
+    const y = dt.getFullYear(), m = dt.getMonth() + 1, d = dt.getDate();
+    out.push({ y, m, d, key: dKey(y, m, d), wd: WEEKDAY_LABELS[dt.getDay()], isToday: i === 0 });
+  }
+  return out;
+}
+
+/* 连续记录天数（截止今天/昨天，从 logMap + 今天是否有记录推算） */
+function computeStreak(logMap, todayActive) {
+  let streak = 0;
+  for (let i = 0; i < 400; i++) {
+    const dt = new Date(TODAY.y, TODAY.m - 1, TODAY.d - i);
+    const key = dKey(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+    const active = i === 0 ? todayActive : !!(logMap[key] && logMap[key].length);
+    if (active) streak++;
+    else if (i === 0) continue;   // 今天还没记录，不打断昨天起的连续
+    else break;
+  }
+  return streak;
+}
+
+function aggTasks(tasks) {
+  let gain = 0, drain = 0;
+  tasks.forEach(t => { if (t.type === 'gain') gain += t.pts; else drain += t.pts; });
+  return { gain, drain, net: gain - drain, count: tasks.length };
+}
+function monthAgg(y, m, tasksFor) {
+  const dim = daysInMonth(y, m); let gain = 0, drain = 0, active = 0, best = null; const cat = {};
+  const days = [];
+  for (let d = 1; d <= dim; d++) {
+    const future = isFuture(y, m, d);
+    const ts = future ? [] : tasksFor(y, m, d);
+    const a = aggTasks(ts);
+    days.push({ d, future, ...a });
+    if (!future && ts.length) {
+      gain += a.gain; drain += a.drain; active++;
+      if (!best || a.net > best.net) best = { d, net: a.net };
+      ts.forEach(t => { if (t.type === 'gain') cat[t.cat] = (cat[t.cat] || 0) + t.pts; });
+    }
+  }
+  return { gain, drain, net: gain - drain, active, best, cat, days };
+}
+function yearAgg(y, tasksFor) {
+  let gain = 0, drain = 0, active = 0; const months = [];
+  for (let m = 1; m <= 12; m++) {
+    const s = monthAgg(y, m, tasksFor);
+    months.push({ m, gain: s.gain, drain: s.drain, net: s.net, active });
+    months[m - 1].active = s.active;
+    gain += s.gain; drain += s.drain; active += s.active;
+  }
+  return { gain, drain, net: gain - drain, active, months };
+}
+
+/* ---------- 分值 → 颜色（不同分值取完全不同的马卡龙色） ---------- */
+function ptsColor(pts) {
+  const h = (pts * 41 + 20) % 360;   // 每个分值映射到独立色相
+  return {
+    base: `oklch(0.84 0.105 ${h})`,  // 主色：色条 / 勾选
+    deep: `oklch(0.55 0.13 ${h})`,   // 深色：文字
+    tint: `oklch(0.95 0.04 ${h})`,   // 浅底：徽标背景
+  };
+}
+
+/* ---------- 图标（线性，22x22 stroke） ---------- */
+function Icon({ name, size = 22, stroke = 2, className, style }) {
+  const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: stroke, strokeLinecap: 'round', strokeLinejoin: 'round', className, style };
+  const paths = {
+    today:   <><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M12 2v2M5 4l1.5 1.5M19 4l-1.5 1.5"/></>,
+    chart:   <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></>,
+    review:  <><path d="M5 4h14a1 1 0 0 1 1 1v15l-4-3-4 3-4-3-4 3V5a1 1 0 0 1 1-1Z"/><path d="M9 9h6M9 13h4"/></>,
+    trophy:  <><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3M9 17h6M8 21h8M12 13v4"/></>,
+    settings:<><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></>,
+    plus:    <><path d="M12 5v14M5 12h14"/></>,
+    sun:     <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></>,
+    sunrise: <><path d="M12 3v5M5.5 9.5 4 8M18.5 9.5 20 8M3 16h18M5 20h14"/><path d="M8 16a4 4 0 0 1 8 0"/></>,
+    spark:   <><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/><circle cx="12" cy="12" r="2.4"/></>,
+    leaf:    <><path d="M11 20A7 7 0 0 1 4 13c0-5 5-9 16-9 0 11-4 16-9 16ZM4 20c4-6 8-8 13-9"/></>,
+    flame:   <><path d="M12 22c4 0 7-2.7 7-7 0-3-2-5-3-7-.5 2-2 3-3 3 0-3-1-5-4-7 1 4-4 6-4 11 0 4.3 3 7 7 7Z"/></>,
+    battery: <><rect x="2" y="8" width="16" height="9" rx="2"/><path d="M22 11v3M6 11v3M10 11v3"/></>,
+    chevron: <><path d="m9 6 6 6-6 6"/></>,
+    close:   <><path d="M6 6l12 12M18 6 6 18"/></>,
+    edit:    <><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></>,
+    trash:   <><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></>,
+    clock:   <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
+    heart:   <><path d="M12 21C5 14.5 3 11.5 3 8.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 9 2.5c0 3-2 6-9 12.5Z"/></>,
+    moon:    <><path d="M20 14a8 8 0 0 1-10-10 8 8 0 1 0 10 10Z"/></>,
+  };
+  return <svg {...p}>{paths[name] || null}</svg>;
+}
+
+Object.assign(window, {
+  MACARON_SWATCHES, DEFAULT_CATEGORIES, CatCtx, ptsColor,
+  SEED_TASKS, ACHIEVEMENTS,
+  SCALE_MAX, computeEnergy, energyMood, fillPct, Icon,
+  TODAY, TODAY_KEY, TODAY_ISO, MONTH_LABELS, WEEKDAY_LABELS,
+  ymdToIso, dKey, isoToKey, recentDays, computeStreak,
+  isFuture, daysInMonth, firstWeekday, aggTasks, monthAgg, yearAgg,
+});
+
+  </script>
+
+  <!-- ==== ball.jsx ==== -->
+  <script type="text/babel" data-presets="react">
+/* ============================================================
+   ball.jsx — 能量可视化：发光球体 · 液态波浪 · 环形仪表
+   ============================================================ */
+
+/* ---- 数字滚动 ---- */
+function useCountUp(value, ms = 700) {
+  const [n, setN] = React.useState(value);
+  const ref = React.useRef(value);
+  React.useEffect(() => {
+    const from = ref.current, to = value, start = performance.now();
+    if (from === to) return;
+    let raf;
+    const tick = (t) => {
+      const k = Math.min(1, (t - start) / ms);
+      const e = 1 - Math.pow(1 - k, 3);
+      setN(Math.round(from + (to - from) * e));
+      if (k < 1) raf = requestAnimationFrame(tick); else ref.current = to;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return n;
+}
+
+/* ============================================================
+   发光球体 (方案 ①)
+   ============================================================ */
+function EnergyOrb({ current, size = 260, showLabel = true }) {
+  const mood = energyMood(current);
+  const n = useCountUp(current);
+  const pct = fillPct(current);
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size, display: 'grid', placeItems: 'center' }}>
+      {/* aura */}
+      <div style={{
+        position: 'absolute', inset: -size * 0.18, borderRadius: '50%',
+        background: `radial-gradient(circle at 50% 50%, ${mood.c1}55, transparent 68%)`,
+        filter: 'blur(8px)', animation: 'pulseGlow 5s ease-in-out infinite',
+      }} />
+      {/* orbit ring */}
+      <svg width={size} height={size} style={{ position: 'absolute', animation: 'spinSlow 28s linear infinite', opacity: .5 }}>
+        <circle cx={size/2} cy={size/2} r={size/2 - 6} fill="none" stroke={mood.c2} strokeWidth="1.5" strokeDasharray="2 12" opacity="0.55" />
+      </svg>
+      {/* sphere */}
+      <div style={{
+        position: 'relative', width: size * 0.78, height: size * 0.78, borderRadius: '50%',
+        background: `radial-gradient(circle at 36% 30%, ${mood.c1}, ${mood.c2} 76%)`,
+        boxShadow: `0 18px 50px ${mood.c2}55, inset 0 -18px 40px ${mood.c2}99, inset 0 10px 28px rgba(255,255,255,0.55)`,
+        animation: 'floaty 6s ease-in-out infinite',
+        display: 'grid', placeItems: 'center', overflow: 'hidden',
+      }}>
+        {/* inner shimmering fill line */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0, height: `${pct*100}%`,
+          background: 'linear-gradient(rgba(255,255,255,0.18), rgba(255,255,255,0))',
+          transition: 'height .8s cubic-bezier(.3,.9,.3,1)',
+        }} />
+        {/* highlight */}
+        <div style={{ position: 'absolute', top: '14%', left: '20%', width: '34%', height: '24%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.85), transparent 70%)', filter: 'blur(2px)' }} />
+        {/* number */}
+        <div style={{ position: 'relative', textAlign: 'center', color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.18)' }}>
+          <div className="energy-num" style={{ fontSize: size * 0.30 }}>{n}</div>
+          {showLabel && <div style={{ fontSize: size * 0.052, fontWeight: 600, letterSpacing: 3, opacity: .9, marginTop: 4 }}>能量值</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   液态能量球 (方案 ②)
+   ============================================================ */
+function LiquidOrb({ current, size = 240 }) {
+  const mood = energyMood(current);
+  const n = useCountUp(current);
+  const pct = fillPct(current);
+  const r = size / 2;
+  // y position of liquid surface
+  const surfaceY = size * (1 - pct);
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size }}>
+      <div style={{
+        position: 'absolute', inset: -size*0.12, borderRadius: '50%',
+        background: `radial-gradient(circle, ${mood.c1}44, transparent 70%)`, filter: 'blur(6px)',
+        animation: 'pulseGlow 5s ease-in-out infinite',
+      }} />
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ position: 'relative' }}>
+        <defs>
+          <clipPath id="orbClip"><circle cx={r} cy={r} r={r - 8} /></clipPath>
+          <linearGradient id="liq" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={mood.c1} />
+            <stop offset="100%" stopColor={mood.c2} />
+          </linearGradient>
+        </defs>
+        {/* glass */}
+        <circle cx={r} cy={r} r={r - 8} fill="rgba(255,255,255,0.6)" stroke={mood.c2} strokeWidth="3" opacity="0.85" />
+        {/* liquid */}
+        <g clipPath="url(#orbClip)">
+          <g style={{ transform: `translateY(${surfaceY}px)`, transition: 'transform .9s cubic-bezier(.3,.9,.3,1)' }}>
+            <path fill="url(#liq)" opacity="0.95">
+              <animate attributeName="d" dur="4.5s" repeatCount="indefinite"
+                values={
+                  `M0 12 Q ${size*0.25} 2, ${size*0.5} 12 T ${size} 12 V ${size*1.6} H0 Z;` +
+                  `M0 12 Q ${size*0.25} 22, ${size*0.5} 12 T ${size} 12 V ${size*1.6} H0 Z;` +
+                  `M0 12 Q ${size*0.25} 2, ${size*0.5} 12 T ${size} 12 V ${size*1.6} H0 Z`
+                } />
+            </path>
+            <path fill={mood.c1} opacity="0.45">
+              <animate attributeName="d" dur="6s" repeatCount="indefinite"
+                values={
+                  `M0 16 Q ${size*0.3} 26, ${size*0.6} 16 T ${size*1.2} 16 V ${size*1.6} H0 Z;` +
+                  `M0 16 Q ${size*0.3} 6, ${size*0.6} 16 T ${size*1.2} 16 V ${size*1.6} H0 Z;` +
+                  `M0 16 Q ${size*0.3} 26, ${size*0.6} 16 T ${size*1.2} 16 V ${size*1.6} H0 Z`
+                } />
+            </path>
+          </g>
+        </g>
+        <ellipse cx={r*0.7} cy={r*0.55} rx={r*0.28} ry={r*0.16} fill="rgba(255,255,255,0.5)" />
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center', pointerEvents: 'none' }}>
+        <div style={{ color: pct > 0.52 ? '#fff' : mood.c2, textShadow: pct > 0.52 ? '0 2px 8px rgba(0,0,0,0.18)' : 'none' }}>
+          <div className="energy-num" style={{ fontSize: size * 0.26 }}>{n}</div>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 3, opacity: .85 }}>能量值</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   环形仪表 (方案 ③)
+   ============================================================ */
+function RingGauge({ current, size = 200, stroke = 16 }) {
+  const mood = energyMood(current);
+  const n = useCountUp(current);
+  const pct = fillPct(current);
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const gapDeg = 90; // open arc bottom
+  const arc = c * (1 - gapDeg / 360);
+  const dash = arc * pct;
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(135deg)' }}>
+        <defs>
+          <linearGradient id="ringG" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={mood.c1} />
+            <stop offset="100%" stopColor={mood.c2} />
+          </linearGradient>
+        </defs>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--bg-2)" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${arc} ${c}`} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="url(#ringG)" strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={`${dash} ${c}`} style={{ transition: 'stroke-dasharray .9s cubic-bezier(.3,.9,.3,1)' }} />
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center' }}>
+        <div>
+          <div className="energy-num" style={{ fontSize: size * 0.28, color: mood.c2 }}>{n}</div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, color: 'var(--ink-3)', marginTop: 2 }}>当前能量</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { useCountUp, EnergyOrb, LiquidOrb, RingGauge });
+
+  </script>
+
+  <!-- ==== components.jsx ==== -->
+  <script type="text/babel" data-presets="react">
+/* ============================================================
+   components.jsx — 侧栏 · 任务项 · 标签 · 弹窗
+   ============================================================ */
+
+function CategoryChip({ cat, small }) {
+  const { map } = React.useContext(CatCtx);
+  const c = map[cat];
+  if (!c) return null;
+  return (
+    <span className="chip" style={small ? { padding: '3px 9px', fontSize: 11 } : null}>
+      <span className="chip-dot" style={{ background: c.color }} />
+      {c.label}
+    </span>
+  );
+}
+
+function Delta({ type, pts, big }) {
+  const c = ptsColor(pts);
+  const sign = type === 'gain' ? '+' : '−';
+  return (
+    <span className="delta" style={{ background: c.tint, color: c.deep, ...(big ? { fontSize: 16, padding: '5px 14px' } : {}) }}>
+      {sign}{pts}
+    </span>
+  );
+}
+
+/* ---------------- 任务项 ---------------- */
+function TaskItem({ task, onToggle, onEdit, onDelete, index = 0 }) {
+  const c = ptsColor(task.pts);
+  return (
+    <div className={`task ${task.done ? 'done' : ''} rise`} style={{ animationDelay: `${index * 0.04}s` }}>
+      <div className="task-stripe" style={{ background: `linear-gradient(${c.base}, ${c.deep})` }} />
+      <button
+        className={`check ${task.done ? 'checked' : ''}`}
+        style={{ borderColor: c.base, ...(task.done ? { background: c.base } : {}) }}
+        onClick={(e) => onToggle(task.id, e)}
+        aria-label="完成"
+      />
+      <div className="task-body">
+        <div className="task-title">{task.title}</div>
+        <div className="task-meta">
+          <CategoryChip cat={task.cat} small />
+          <span className="chip" style={{ padding: '3px 9px', fontSize: 11, background: 'var(--bg-2)', color: task.type === 'gain' ? 'var(--gain)' : 'var(--drain)' }}>
+            {task.type === 'gain' ? '增能' : '耗能'}
+          </span>
+          {task.time && <span className="task-time"><Icon name="clock" size={12} stroke={2.2} style={{ verticalAlign: '-2px', marginRight: 3 }} />{task.time}</span>}
+        </div>
+      </div>
+      <Delta type={task.type} pts={task.pts} />
+      <div style={{ display: 'flex', gap: 4 }}>
+        <button className="task-act" onClick={() => onEdit(task)} aria-label="编辑"
+          style={iconActStyle}><Icon name="edit" size={16} /></button>
+        <button className="task-act" onClick={() => onDelete(task.id)} aria-label="删除"
+          style={iconActStyle}><Icon name="trash" size={16} /></button>
+      </div>
+    </div>
+  );
+}
+const iconActStyle = { width: 32, height: 32, borderRadius: 10, display: 'grid', placeItems: 'center', color: 'var(--ink-3)', transition: 'background .15s, color .15s' };
+
+/* ---------------- 分类选择器（弹出式，仅选择用） ---------------- */
+function CategoryPicker({ value, onChange, compact }) {
+  const { list, map } = React.useContext(CatCtx);
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef();
+  React.useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+  const cur = map[value] || list[0];
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button type="button" className="cat-pick" onClick={() => setOpen(o => !o)}>
+        <span className="chip-dot" style={{ background: cur ? cur.color : 'var(--ink-3)' }} />
+        <span style={{ maxWidth: compact ? 56 : 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cur ? cur.label : '分类'}</span>
+        <Icon name="chevron" size={13} style={{ transform: 'rotate(90deg)', opacity: .45, flexShrink: 0 }} />
+      </button>
+      {open && (
+        <div className="cat-pop scroll">
+          {list.map(c => (
+            <button key={c.id} type="button" className="cat-pop-item" onClick={() => { onChange(c.id); setOpen(false); }}>
+              <span className="chip-dot" style={{ background: c.color }} />
+              <span style={{ flex: 1, textAlign: 'left' }}>{c.label}</span>
+              {value === c.id && <Icon name="chevron" size={0} />}
+              {value === c.id && <span style={{ color: 'var(--gain)', fontWeight: 700 }}>✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- 侧栏 ---------------- */
+const NAV = [
+  { key: 'today',    label: '今日',   icon: 'today' },
+  { key: 'stats',    label: '能量趋势', icon: 'chart' },
+  { key: 'summary',  label: '总结',   icon: 'review' },
+  { key: 'achieve',  label: '成就',   icon: 'trophy' },
+  { key: 'settings', label: '设置',   icon: 'settings' },
+];
+
+const SYNC_LABEL = { loading: '☁ 同步中…', saving: '⟳ 保存中…', synced: '✓ 已同步', error: '⚠ 同步失败', local: '本地' };
+const SYNC_COLOR = { loading: 'var(--ink-3)', saving: 'var(--amber)', synced: 'var(--gain)', error: 'var(--drain)', local: 'var(--ink-3)' };
+
+function Sidebar({ route, setRoute, energy, onAdd, account }) {
+  const mood = energyMood(energy.current);
+  return (
+    <aside className="sidebar">
+      <div className="brand">
+        <div className="brand-mark" />
+        <div>
+          <div className="brand-name">INTJ能量板</div>
+          <div className="brand-sub">ENERGY</div>
+        </div>
+      </div>
+
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {NAV.map(n => (
+          <button key={n.key} className={`nav-item ${route === n.key ? 'active' : ''}`} onClick={() => setRoute(n.key)}>
+            <Icon name={n.icon} size={20} className="nav-ic" />
+            {n.label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="side-spacer" />
+
+      <button className="btn btn-gain btn-lg" style={{ width: '100%', marginBottom: 14 }} onClick={onAdd}>
+        <Icon name="plus" size={18} stroke={2.6} /> 新建任务
+      </button>
+
+      <div className="side-mini">
+        <div className="side-mini-row">
+          <div style={{ width: 34, height: 34, borderRadius: '50%', background: `radial-gradient(circle at 36% 30%, ${mood.c1}, ${mood.c2})`, boxShadow: `0 4px 12px ${mood.c2}55`, flexShrink: 0 }} />
+          <div>
+            <div className="side-mini-val" style={{ color: mood.c2 }}>{energy.current}</div>
+            <div className="side-mini-lab">当前能量 · {energy.net >= 0 ? '+' : ''}{energy.net} 今日净值</div>
+          </div>
+        </div>
+      </div>
+
+      {account && account.email && (
+        <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 'var(--r-md)', background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: 'var(--sh-sm)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={account.email}>{account.email}</div>
+            <div style={{ fontSize: 11, marginTop: 2, color: SYNC_COLOR[account.sync] || 'var(--ink-3)' }}>{SYNC_LABEL[account.sync] || ''}</div>
+          </div>
+          <button onClick={account.onSignOut} title="退出登录"
+            style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)', padding: '6px 10px', borderRadius: 'var(--r-pill)', background: 'var(--bg-2)', flexShrink: 0 }}>退出</button>
+        </div>
+      )}
+      {account && account.local && (
+        <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 'var(--r-md)', background: 'var(--amber-tint)', border: '1px solid var(--amber-2)', fontSize: 11.5, color: 'var(--ink-2)', lineHeight: 1.5 }}>
+          本地模式 · 数据仅存此浏览器。配置 Supabase 后即可登录、多设备同步。
+        </div>
+      )}
+    </aside>
+  );
+}
+
+/* ---------------- 弹窗 ---------------- */
+function Modal({ children, onClose }) {
+  React.useEffect(() => {
+    const h = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, []);
+  return (
+    <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal">{children}</div>
+    </div>
+  );
+}
+
+/* ---------------- 小标题 ---------------- */
+function SectionLabel({ children, right }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 2px 14px' }}>
+      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, color: 'var(--ink-3)', textTransform: 'uppercase' }}>{children}</div>
+      {right}
+    </div>
+  );
+}
+
+Object.assign(window, { CategoryChip, Delta, TaskItem, Sidebar, Modal, SectionLabel, NAV, CategoryPicker });
+
+  </script>
+
+  <!-- ==== home.jsx ==== -->
+  <script type="text/babel" data-presets="react">
+/* ============================================================
+   home.jsx — 主界面 · 3 个方向（应用内可切换）
+   ① 能量星球   ② 液态能量   ③ 能量仪表盘
+   ============================================================ */
+
+/* -------- 快速添加栏 -------- */
+function QuickAdd({ onAdd }) {
+  const { list } = React.useContext(CatCtx);
+  const [text, setText] = React.useState('');
+  const [type, setType] = React.useState('gain');
+  const [pts, setPts] = React.useState(6);
+  const [cat, setCat] = React.useState(list[0] ? list[0].id : 'hobby');
+  const c = ptsColor(pts);
+  const submit = () => {
+    if (!text.trim()) return;
+    onAdd({ title: text.trim(), type, pts, cat, time: '' });
+    setText(''); setPts(6); setType('gain');
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-md)', boxShadow: 'var(--sh-sm)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.base, flexShrink: 0, marginLeft: 4 }} />
+        <input
+          value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()}
+          placeholder="想做点什么？回车快速添加…"
+          style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 15 }}
+        />
+        <button className="btn btn-primary btn-sm" onClick={submit}>添加</button>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingLeft: 4 }}>
+        <div className="seg" style={{ boxShadow: 'none', border: '1px solid var(--line)' }}>
+          <button className={`seg-btn ${type === 'gain' ? 'active' : ''}`} onClick={() => setType('gain')}
+            style={type === 'gain' ? { background: 'var(--gain)' } : null}>增能</button>
+          <button className={`seg-btn ${type === 'drain' ? 'active' : ''}`} onClick={() => setType('drain')}
+            style={type === 'drain' ? { background: 'var(--drain)' } : null}>耗能</button>
+        </div>
+        <CategoryPicker value={cat} onChange={setCat} compact />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', color: 'var(--ink-3)' }}>
+          <button onClick={() => setPts(Math.max(1, pts - 1))} style={stepBtn}>−</button>
+          <span style={{ fontFamily: 'var(--font-disp)', fontWeight: 600, fontSize: 15, minWidth: 30, textAlign: 'center', color: c.deep }}>{type === 'gain' ? '+' : '−'}{pts}</span>
+          <button onClick={() => setPts(Math.min(30, pts + 1))} style={stepBtn}>+</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+const stepBtn = { width: 26, height: 26, borderRadius: 8, background: 'var(--bg-2)', fontWeight: 700, fontSize: 16, color: 'var(--ink-2)', display: 'grid', placeItems: 'center' };
+
+/* -------- 任务列表（待办 / 已完成 分组） -------- */
+function TaskList({ tasks, onToggle, onEdit, onDelete, columns = 1 }) {
+  const todo = tasks.filter(t => !t.done);
+  const done = tasks.filter(t => t.done);
+  const grid = { display: 'grid', gridTemplateColumns: columns === 2 ? '1fr 1fr' : '1fr', gap: 10 };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div>
+        <SectionLabel>待办 · {todo.length}</SectionLabel>
+        {todo.length === 0
+          ? <div style={emptyStyle}>🌿 今天的待办都完成啦，给自己一个拥抱</div>
+          : <div style={grid}>{todo.map((t, i) => <TaskItem key={t.id} task={t} index={i} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />)}</div>}
+      </div>
+      {done.length > 0 && (
+        <div>
+          <SectionLabel>已完成 · {done.length}</SectionLabel>
+          <div style={grid}>{done.map((t, i) => <TaskItem key={t.id} task={t} index={i} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />)}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+const emptyStyle = { padding: '26px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14, background: 'var(--surface-2)', border: '1px dashed var(--line-2)', borderRadius: 'var(--r-md)' };
+
+/* -------- 增/耗 小结条 -------- */
+function GainDrainBars({ energy }) {
+  const max = Math.max(energy.gain, energy.drain, 1);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div>
+        <div style={barRow}><span style={{ color: 'var(--gain)' }}>今日增能</span><b style={{ fontFamily: 'var(--font-disp)', color: 'var(--gain)' }}>+{energy.gain}</b></div>
+        <div className="bar-track"><div className="bar-fill" style={{ width: `${energy.gain / max * 100}%`, background: 'linear-gradient(90deg, var(--gain-2), var(--gain))' }} /></div>
+      </div>
+      <div>
+        <div style={barRow}><span style={{ color: 'var(--drain)' }}>今日耗能</span><b style={{ fontFamily: 'var(--font-disp)', color: 'var(--drain)' }}>−{energy.drain}</b></div>
+        <div className="bar-track"><div className="bar-fill" style={{ width: `${energy.drain / max * 100}%`, background: 'linear-gradient(90deg, var(--drain-2), var(--drain))' }} /></div>
+      </div>
+    </div>
+  );
+}
+const barRow = { display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 600, marginBottom: 7 };
+
+/* -------- 顶栏（含方案切换） -------- */
+function HomeTop({ variant, setVariant, energy }) {
+  const hour = 14;
+  const hello = hour < 11 ? '早上好' : hour < 18 ? '下午好' : '晚上好';
+  const mood = energyMood(energy.current);
+  return (
+    <div style={{ marginBottom: 26 }}>
+      <div className="topbar">
+        <div>
+          <div className="greeting">{hello}，今天想怎么过？</div>
+          <div className="subgreet">{mood.msg}</div>
+        </div>
+        <div className="date-pill">5 月 29 日 · 周五</div>
+      </div>
+      <div className="seg">
+        {[['orb','①  能量星球'],['liquid','②  液态能量'],['dash','③  能量仪表盘']].map(([k, l]) => (
+          <button key={k} className={`seg-btn ${variant === k ? 'active' : ''}`} onClick={() => setVariant(k)}>{l}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   方案 ① 能量星球
+   ============================================================ */
+function HomeOrb({ tasks, energy, ...rest }) {
+  const mood = energyMood(energy.current);
+  return (
+    <div className="fade-page">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '14px 0 30px' }}>
+        <EnergyOrb current={energy.current} size={272} />
+        <div style={{ fontFamily: 'var(--font-round)', fontSize: 22, marginTop: 18, color: 'var(--ink)' }}>{mood.msg}</div>
+        <div style={{ color: 'var(--ink-2)', fontSize: 14, marginTop: 6, maxWidth: 360 }}>{mood.hint}</div>
+        <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+          <div style={statPill}><span style={{ color: 'var(--ink-3)' }}>初始</span><b style={{ fontFamily: 'var(--font-disp)' }}>{energy.current - energy.net}</b></div>
+          <div style={statPill}><span style={{ color: 'var(--gain)' }}>增能</span><b style={{ fontFamily: 'var(--font-disp)', color: 'var(--gain)' }}>+{energy.gain}</b></div>
+          <div style={statPill}><span style={{ color: 'var(--drain)' }}>耗能</span><b style={{ fontFamily: 'var(--font-disp)', color: 'var(--drain)' }}>−{energy.drain}</b></div>
+        </div>
+      </div>
+      <div style={{ width: 'min(620px, 100%)', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <QuickAdd onAdd={rest.onAdd} />
+        <TaskList tasks={tasks} {...rest} />
+      </div>
+    </div>
+  );
+}
+const statPill = { display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-pill)', boxShadow: 'var(--sh-sm)', fontSize: 13, fontWeight: 600 };
+
+/* ============================================================
+   方案 ② 液态能量
+   ============================================================ */
+function HomeLiquid({ tasks, energy, ...rest }) {
+  const mood = energyMood(energy.current);
+  return (
+    <div className="fade-page" style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 24, alignItems: 'start' }}>
+      <div style={{ position: 'sticky', top: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 12, background: `linear-gradient(180deg, ${mood.c1}14, var(--surface))` }}>
+          <LiquidOrb current={energy.current} size={232} />
+          <div style={{ fontFamily: 'var(--font-round)', fontSize: 18, color: 'var(--ink)' }}>{mood.msg}</div>
+          <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>{mood.hint}</div>
+        </div>
+        <div className="card card-pad"><GainDrainBars energy={energy} /></div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <QuickAdd onAdd={rest.onAdd} />
+        <TaskList tasks={tasks} {...rest} />
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   方案 ③ 能量仪表盘
+   ============================================================ */
+function HomeDash({ tasks, energy, ...rest }) {
+  const total = tasks.length, done = tasks.filter(t => t.done).length;
+  const donePct = Math.round(done / Math.max(total, 1) * 100);
+  return (
+    <div className="fade-page">
+      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr 1fr', gap: 16, marginBottom: 22 }}>
+        <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <RingGauge current={energy.current} size={150} stroke={14} />
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>今日净值</div>
+            <div className="energy-num" style={{ fontSize: 34, color: energy.net >= 0 ? 'var(--gain)' : 'var(--drain)' }}>{energy.net >= 0 ? '+' : '−'}{Math.abs(energy.net)}</div>
+          </div>
+        </div>
+        <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <GainDrainBars energy={energy} />
+        </div>
+        <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', gap: 6 }}>
+          <div style={{ fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>完成进度</div>
+          <div className="energy-num" style={{ fontSize: 40, color: 'var(--amber)' }}>{donePct}<span style={{ fontSize: 18 }}>%</span></div>
+          <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>{done} / {total} 件已完成</div>
+          <div className="bar-track" style={{ width: '100%', marginTop: 4 }}><div className="bar-fill" style={{ width: `${donePct}%`, background: 'linear-gradient(90deg, var(--amber-2), var(--amber))' }} /></div>
+        </div>
+      </div>
+      <QuickAdd onAdd={rest.onAdd} />
+      <div style={{ marginTop: 16 }}>
+        <TaskList tasks={tasks} columns={2} {...rest} />
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   Home 容器
+   ============================================================ */
+function Home({ tasks, energy, variant, setVariant, onToggle, onEdit, onDelete, onAdd }) {
+  const shared = { onToggle, onEdit, onDelete, onAdd };
+  return (
+    <div>
+      <HomeTop variant={variant} setVariant={setVariant} energy={energy} />
+      {variant === 'orb'    && <HomeOrb    tasks={tasks} energy={energy} {...shared} />}
+      {variant === 'liquid' && <HomeLiquid tasks={tasks} energy={energy} {...shared} />}
+      {variant === 'dash'   && <HomeDash   tasks={tasks} energy={energy} {...shared} />}
+    </div>
+  );
+}
+
+Object.assign(window, { Home, QuickAdd, TaskList, GainDrainBars });
+
+  </script>
+
+  <!-- ==== screens.jsx ==== -->
+  <script type="text/babel" data-presets="react">
+/* ============================================================
+   screens.jsx — 新建/编辑 · 能量趋势 · 今日回顾 · 成就 · 设置
+   ============================================================ */
+
+/* ============================================================
+   分类管理字段（选择 + 自定义新增 + 改名/改色 + 删除）
+   ============================================================ */
+function SwatchPalette({ value, onPick }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {MACARON_SWATCHES.map(s => (
+        <button key={s} type="button" onClick={() => onPick(s)} aria-label="选色"
+          style={{ width: 26, height: 26, borderRadius: '50%', background: s, flexShrink: 0,
+            border: value === s ? '2.5px solid var(--ink)' : '2px solid #fff',
+            boxShadow: '0 1px 5px rgba(0,0,0,0.14)', transition: 'transform .12s' }} />
+      ))}
+    </div>
+  );
+}
+
+function CategoryField({ value, onChange }) {
+  const { list, addCat, updateCat, deleteCat } = React.useContext(CatCtx);
+  const [manage, setManage] = React.useState(false);
+  const [adding, setAdding] = React.useState(false);
+  const [nName, setNName] = React.useState('');
+  const [nColor, setNColor] = React.useState(MACARON_SWATCHES[0]);
+  const [colorFor, setColorFor] = React.useState(null);
+
+  const startAdd = () => { setAdding(true); setNName(''); setNColor(MACARON_SWATCHES[Math.floor(Math.random() * MACARON_SWATCHES.length)]); };
+  const doAdd = () => {
+    if (!nName.trim()) return;
+    const id = addCat(nName.trim(), nColor);
+    onChange(id); setAdding(false); setNName('');
+  };
+  const doDelete = (id) => {
+    deleteCat(id);
+    if (value === id) { const rest = list.filter(c => c.id !== id); onChange(rest[0] ? rest[0].id : undefined); }
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <label style={{ ...fieldLabel, marginBottom: 0 }}>分类</label>
+        <button type="button" onClick={() => { setManage(m => !m); setAdding(false); setColorFor(null); }}
+          style={{ fontSize: 12, fontWeight: 700, color: manage ? 'var(--gain)' : 'var(--ink-2)', whiteSpace: 'nowrap' }}>
+          {manage ? '✓ 完成' : '管理分类'}
+        </button>
+      </div>
+
+      {/* 选择模式 */}
+      {!manage && (
+        <>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {list.map(c => (
+              <button key={c.id} type="button" onClick={() => onChange(c.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 'var(--r-pill)', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+                  border: `1.5px solid ${value === c.id ? c.color : 'var(--line-2)'}`,
+                  background: value === c.id ? c.color : 'var(--surface)', color: value === c.id ? '#5a4a52' : 'var(--ink-2)', transition: 'all .15s' }}>
+                <span className="chip-dot" style={{ background: value === c.id ? 'rgba(90,74,82,0.55)' : c.color }} />{c.label}
+              </button>
+            ))}
+            <button type="button" onClick={startAdd}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 'var(--r-pill)', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+                border: '1.5px dashed var(--line-2)', background: 'transparent', color: 'var(--ink-2)' }}>
+              <Icon name="plus" size={14} stroke={2.4} /> 新分类
+            </button>
+          </div>
+          {adding && (
+            <div style={addBox}>
+              <input autoFocus value={nName} onChange={e => setNName(e.target.value)} onKeyDown={e => e.key === 'Enter' && doAdd()}
+                placeholder="分类名称，如「冥想」" style={{ ...inputStyle, padding: '10px 13px' }} />
+              <div style={{ margin: '12px 0' }}><SwatchPalette value={nColor} onPick={setNColor} /></div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAdding(false)}>取消</button>
+                <button type="button" className="btn btn-sm" style={{ background: nColor, color: '#5a4a52' }} onClick={doAdd}>添加分类</button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* 管理模式 */}
+      {manage && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {list.map(c => (
+            <div key={c.id}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 'var(--r-sm)', background: 'var(--surface-2)', border: '1px solid var(--line)' }}>
+                <button type="button" onClick={() => setColorFor(colorFor === c.id ? null : c.id)}
+                  style={{ width: 24, height: 24, borderRadius: '50%', background: c.color, border: '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.15)', flexShrink: 0 }} aria-label="改色" />
+                <input value={c.label} onChange={e => updateCat(c.id, { label: e.target.value })}
+                  style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 14, fontWeight: 500 }} />
+                <button type="button" onClick={() => doDelete(c.id)} disabled={list.length <= 1}
+                  style={{ width: 30, height: 30, borderRadius: 8, display: 'grid', placeItems: 'center', color: list.length <= 1 ? 'var(--line-2)' : 'var(--drain)' }} aria-label="删除"><Icon name="trash" size={15} /></button>
+              </div>
+              {colorFor === c.id && (
+                <div style={{ padding: '12px 8px 4px' }}>
+                  <SwatchPalette value={c.color} onPick={(col) => { updateCat(c.id, { color: col }); setColorFor(null); }} />
+                </div>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={startAdd}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', borderRadius: 'var(--r-sm)', fontSize: 13, fontWeight: 600, border: '1.5px dashed var(--line-2)', background: 'transparent', color: 'var(--ink-2)' }}>
+            <Icon name="plus" size={15} stroke={2.4} /> 新建分类
+          </button>
+          {adding && (
+            <div style={addBox}>
+              <input autoFocus value={nName} onChange={e => setNName(e.target.value)} onKeyDown={e => e.key === 'Enter' && doAdd()}
+                placeholder="分类名称" style={{ ...inputStyle, padding: '10px 13px' }} />
+              <div style={{ margin: '12px 0' }}><SwatchPalette value={nColor} onPick={setNColor} /></div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAdding(false)}>取消</button>
+                <button type="button" className="btn btn-sm" style={{ background: nColor, color: '#5a4a52' }} onClick={doAdd}>添加分类</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+const addBox = { marginTop: 12, padding: 14, borderRadius: 'var(--r-md)', background: 'var(--surface-2)', border: '1px solid var(--line)' };
+
+/* ============================================================
+   新建 / 编辑任务弹窗
+   ============================================================ */
+function TaskModal({ initial, onSave, onClose, onDelete }) {
+  const editing = !!initial?.id;
+  const [title, setTitle] = React.useState(initial?.title || '');
+  const [type, setType]   = React.useState(initial?.type || 'gain');
+  const [pts, setPts]     = React.useState(initial?.pts || 8);
+  const [cat, setCat]     = React.useState(initial?.cat || 'hobby');
+  const [time, setTime]   = React.useState(initial?.time || '');
+  const accent = type === 'gain' ? 'var(--gain)' : 'var(--drain)';
+
+  const save = () => {
+    if (!title.trim()) return;
+    onSave({ ...(initial || {}), title: title.trim(), type, pts, cat, time });
+  };
+
+  return (
+    <Modal onClose={onClose}>
+      <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-round)', fontSize: 20 }}>{editing ? '编辑任务' : '新建任务'}</div>
+        <button className="icon-btn" style={{ width: 34, height: 34, boxShadow: 'none', border: 'none', background: 'var(--bg-2)' }} onClick={onClose}><Icon name="close" size={18} /></button>
+      </div>
+
+      <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 22 }}>
+        {/* 这件事是… */}
+        <div>
+          <label style={fieldLabel}>这件事会让你…</label>
+          <div className="seg" style={{ width: '100%', boxShadow: 'none', border: '1px solid var(--line)' }}>
+            <button className={`seg-btn ${type === 'gain' ? 'active' : ''}`} style={{ flex: 1, ...(type === 'gain' ? { background: 'var(--gain)' } : {}) }} onClick={() => setType('gain')}>🌱 增加能量</button>
+            <button className={`seg-btn ${type === 'drain' ? 'active' : ''}`} style={{ flex: 1, ...(type === 'drain' ? { background: 'var(--drain)' } : {}) }} onClick={() => setType('drain')}>🪫 消耗能量</button>
+          </div>
+        </div>
+
+        {/* 名称 */}
+        <div>
+          <label style={fieldLabel}>任务名称</label>
+          <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="例如：读完论文综述"
+            style={inputStyle} />
+        </div>
+
+        {/* 能量值 */}
+        <div>
+          <label style={fieldLabel}>能量{type === 'gain' ? '增加' : '消耗'} · <b style={{ color: accent, fontFamily: 'var(--font-disp)', fontSize: 16 }}>{type === 'gain' ? '+' : '−'}{pts}</b></label>
+          <input type="range" min="1" max="30" value={pts} onChange={e => setPts(+e.target.value)}
+            style={{ width: '100%', accentColor: accent }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-disp)' }}><span>1</span><span>15</span><span>30</span></div>
+        </div>
+
+        {/* 分类（可选择 / 自定义管理） */}
+        <CategoryField value={cat} onChange={setCat} />
+
+        {/* 时间 */}
+        <div>
+          <label style={fieldLabel}>计划时间（可选）</label>
+          <input value={time} onChange={e => setTime(e.target.value)} placeholder="例如：09:30" style={inputStyle} />
+        </div>
+      </div>
+
+      <div style={{ padding: '18px 26px', borderTop: '1px solid var(--line)', display: 'flex', gap: 12, justifyContent: 'space-between', alignItems: 'center' }}>
+        {editing
+          ? <button className="btn btn-ghost btn-sm" style={{ color: 'var(--drain)' }} onClick={() => onDelete(initial.id)}><Icon name="trash" size={15} /> 删除</button>
+          : <span />}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-ghost" onClick={onClose}>取消</button>
+          <button className="btn" style={{ background: accent, color: '#fff', boxShadow: 'var(--sh-md)' }} onClick={save}>{editing ? '保存' : '添加任务'}</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+const fieldLabel = { display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 10 };
+const inputStyle = { width: '100%', padding: '12px 15px', border: '1.5px solid var(--line-2)', borderRadius: 'var(--r-sm)', fontSize: 15, outline: 'none', background: 'var(--surface-2)', transition: 'border-color .15s' };
+
+/* ============================================================
+   能量趋势
+   ============================================================ */
+function WeekChart({ data }) {
+  const W = 720, H = 240, pad = 30, baseline = H * 0.62;
+  const n = data.length;
+  const step = (W - pad * 2) / n;
+  const maxV = Math.max(...data.map(d => Math.max(d.gain || 0, d.drain || 0))) || 1;
+  const scale = (baseline - 24) / maxV;
+  const netPts = data.map((d, i) => {
+    const x = pad + step * i + step / 2;
+    const y = baseline - (d.net || 0) * ((H - baseline - 24) / maxV) - 0; // net relative
+    return [x, baseline - (d.net || 0) * scale];
+  });
+  const linePath = netPts.map((p, i) => `${i ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ');
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ overflow: 'visible' }}>
+      <line x1={pad} y1={baseline} x2={W - pad} y2={baseline} stroke="var(--line-2)" strokeWidth="1.5" />
+      {data.map((d, i) => {
+        const x = pad + step * i + step / 2;
+        const live = d.live;
+        const bw = 12;
+        return (
+          <g key={i}>
+            {(d.gain > 0 || d.drain > 0) && <>
+              <rect x={x - bw - 2} y={baseline - d.gain * scale} width={bw} height={d.gain * scale} rx="4" fill="var(--gain-2)" opacity={live ? 1 : 0.9} />
+              <rect x={x + 2} y={baseline} width={bw} height={d.drain * scale} rx="4" fill="var(--drain-2)" opacity={live ? 1 : 0.9} />
+            </>}
+            <text x={x} y={H - 6} textAnchor="middle" fontSize="12" fontWeight={live ? 700 : 500} fill={live ? 'var(--gain)' : 'var(--ink-3)'} fontFamily="var(--font-body)">{d.day}</text>
+          </g>
+        );
+      })}
+      <path d={linePath} fill="none" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.75" />
+      {netPts.map((p, i) => (
+        <circle key={i} cx={p[0]} cy={p[1]} r={data[i].live ? 6 : 4} fill={data[i].live ? 'var(--gain)' : 'var(--surface)'} stroke="var(--ink)" strokeWidth="2" />
+      ))}
+    </svg>
+  );
+}
+
+function Stats({ energy, tasks, logMap = {} }) {
+  const { map: cmap } = React.useContext(CatCtx);
+  const data = recentDays(7).map(dd => {
+    if (dd.isToday) return { day: '今天', net: energy.net, gain: energy.gain, drain: energy.drain, live: true };
+    const a = aggTasks(logMap[dd.key] || []);
+    return { day: '周' + dd.wd, net: a.net, gain: a.gain, drain: a.drain, live: false };
+  });
+  const avg = Math.round(data.reduce((s, d) => s + d.net, 0) / data.length);
+  const best = data.reduce((a, b) => b.net > a.net ? b : a);
+  // category distribution (gain only)
+  const catAgg = {};
+  tasks.forEach(t => { if (t.type === 'gain') catAgg[t.cat] = (catAgg[t.cat] || 0) + t.pts; });
+  const catList = Object.entries(catAgg).sort((a, b) => b[1] - a[1]);
+  const catMax = Math.max(...catList.map(c => c[1]), 1);
+
+  return (
+    <div className="fade-page">
+      <div className="topbar"><div><div className="greeting">能量趋势</div><div className="subgreet">看看这一周，你的能量都流向了哪里。</div></div></div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 18 }}>
+        <StatCard label="本周日均净能量" value={`${avg >= 0 ? '+' : ''}${avg}`} tint="var(--gain)" />
+        <StatCard label="能量最佳日" value={best.day} sub={`+${best.net} 净能量`} tint="var(--amber)" />
+        <StatCard label="今日实时净值" value={`${energy.net >= 0 ? '+' : ''}${energy.net}`} tint={energy.net >= 0 ? 'var(--gain)' : 'var(--drain)'} />
+      </div>
+
+      <div className="card card-pad" style={{ marginBottom: 18 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+          <div><div className="card-title">近 7 日能量</div><div className="card-sub">柱为当日增能/耗能，折线为净能量</div></div>
+          <div style={{ display: 'flex', gap: 16, fontSize: 12, fontWeight: 600 }}>
+            <span style={{ color: 'var(--gain)' }}>● 增能</span>
+            <span style={{ color: 'var(--drain)' }}>● 耗能</span>
+            <span style={{ color: 'var(--ink-2)' }}>— 净值</span>
+          </div>
+        </div>
+        <WeekChart data={data} />
+      </div>
+
+      <div className="card card-pad">
+        <div className="card-title" style={{ marginBottom: 4 }}>今日增能来源</div>
+        <div className="card-sub" style={{ marginBottom: 18 }}>哪些类别在为你充电</div>
+        {catList.length === 0 ? <div style={{ color: 'var(--ink-3)', fontSize: 14 }}>还没有增能记录</div> :
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {catList.filter(([k]) => cmap[k]).map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 56, fontSize: 13, fontWeight: 600, color: 'var(--ink-2)' }}>{cmap[k].label}</div>
+                <div className="bar-track" style={{ flex: 1 }}><div className="bar-fill" style={{ width: `${v / catMax * 100}%`, background: cmap[k].color }} /></div>
+                <div style={{ width: 40, textAlign: 'right', fontFamily: 'var(--font-disp)', fontWeight: 600, color: cmap[k].color }}>+{v}</div>
+              </div>
+            ))}
+          </div>}
+      </div>
+    </div>
+  );
+}
+function StatCard({ label, value, sub, tint }) {
+  return (
+    <div className="card card-pad">
+      <div style={{ fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>{label}</div>
+      <div className="energy-num" style={{ fontSize: 32, color: tint, margin: '8px 0 2px' }}>{value}</div>
+      {sub && <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>{sub}</div>}
+    </div>
+  );
+}
+
+/* ============================================================
+   今日回顾
+   ============================================================ */
+function Review({ energy, tasks }) {
+  const mood = energyMood(energy.current);
+  const doneGain = tasks.filter(t => t.done && t.type === 'gain');
+  const doneDrain = tasks.filter(t => t.done && t.type === 'drain');
+  const pending = tasks.filter(t => !t.done);
+  return (
+    <div className="fade-page">
+      <div className="topbar"><div><div className="greeting">今日回顾</div><div className="subgreet">慢下来，看看今天的能量故事。</div></div></div>
+
+      <div className="card" style={{ overflow: 'hidden', marginBottom: 18 }}>
+        <div style={{ padding: '30px 28px', background: `linear-gradient(120deg, ${mood.c1}22, ${mood.c2}12)`, display: 'flex', alignItems: 'center', gap: 26 }}>
+          <EnergyOrb current={energy.current} size={160} showLabel={false} />
+          <div>
+            <div style={{ fontFamily: 'var(--font-round)', fontSize: 24, color: 'var(--ink)' }}>{mood.msg}</div>
+            <div style={{ color: 'var(--ink-2)', fontSize: 15, marginTop: 8, maxWidth: 380 }}>{mood.hint}</div>
+            <div style={{ display: 'flex', gap: 22, marginTop: 18 }}>
+              <div><div className="energy-num" style={{ fontSize: 26, color: 'var(--gain)' }}>+{energy.gain}</div><div style={{ fontSize: 12, color: 'var(--ink-3)' }}>充电</div></div>
+              <div><div className="energy-num" style={{ fontSize: 26, color: 'var(--drain)' }}>−{energy.drain}</div><div style={{ fontSize: 12, color: 'var(--ink-3)' }}>消耗</div></div>
+              <div><div className="energy-num" style={{ fontSize: 26, color: 'var(--ink)' }}>{energy.net >= 0 ? '+' : '−'}{Math.abs(energy.net)}</div><div style={{ fontSize: 12, color: 'var(--ink-3)' }}>净值</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <ReviewCol title="为你充电的事" emoji="🌱" items={doneGain} tint="var(--gain)" empty="今天还没有完成增能的事，挑一件喜欢的开始吧。" />
+        <ReviewCol title="消耗了你的事" emoji="🪫" items={doneDrain} tint="var(--drain)" empty="今天还没有被消耗，真好。" />
+      </div>
+
+      {pending.length > 0 &&
+        <div className="card card-pad" style={{ marginTop: 16 }}>
+          <div className="card-title" style={{ marginBottom: 4 }}>还没做的 {pending.length} 件</div>
+          <div className="card-sub" style={{ marginBottom: 14 }}>没关系，明天还有机会。它们暂时不计入今天的能量。</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {pending.map(t => <span key={t.id} className="chip">{t.title} <span style={{ color: t.type === 'gain' ? 'var(--gain)' : 'var(--drain)', fontFamily: 'var(--font-disp)' }}>{t.type === 'gain' ? '+' : '−'}{t.pts}</span></span>)}
+          </div>
+        </div>}
+    </div>
+  );
+}
+function ReviewCol({ title, emoji, items, tint, empty }) {
+  const { map: cmap } = React.useContext(CatCtx);
+  return (
+    <div className="card card-pad">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <span style={{ fontSize: 18 }}>{emoji}</span><span className="card-title">{title}</span>
+        <span className="delta" style={{ marginLeft: 'auto', background: 'var(--bg-2)', color: tint }}>{items.length}</span>
+      </div>
+      {items.length === 0 ? <div style={{ color: 'var(--ink-3)', fontSize: 13 }}>{empty}</div> :
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {items.map(t => (
+            <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="chip-dot" style={{ background: cmap[t.cat] ? cmap[t.cat].color : 'var(--ink-3)' }} />
+              <span style={{ flex: 1, fontSize: 14 }}>{t.title}</span>
+              <span style={{ fontFamily: 'var(--font-disp)', fontWeight: 600, color: tint }}>{t.type === 'gain' ? '+' : '−'}{t.pts}</span>
+            </div>
+          ))}
+        </div>}
+    </div>
+  );
+}
+
+/* ============================================================
+   成就
+   ============================================================ */
+function Achievements({ logMap = {}, tasks = [] }) {
+  // 全部基于真实记录计算，新账号从 0 开始
+  const todayDone = tasks.filter(t => t.done);
+  const days = Object.values(logMap).filter(ts => ts && ts.length);
+  if (todayDone.length) days.push(todayDone);
+  let totalGain = 0, maxNet = 0, maxGainCount = 0, lowDrainDay = false;
+  days.forEach(ts => {
+    const a = aggTasks(ts);
+    totalGain += a.gain;
+    maxNet = Math.max(maxNet, a.net);
+    maxGainCount = Math.max(maxGainCount, ts.filter(t => t.type === 'gain').length);
+    if (a.drain <= 10) lowDrainDay = true;
+  });
+  const activeDays = days.length;
+  const streak = computeStreak(logMap, todayDone.length > 0);
+
+  const list = [
+    { id: 'a1', name: '净值高峰', desc: '单日净能量达到 30', icon: 'sun',     tint: '#EFC15E', got: maxNet >= 30 },
+    { id: 'a2', name: '坚持记录', desc: '累计记录满 3 天',   icon: 'sunrise', tint: '#F0A878', got: activeDays >= 3 },
+    { id: 'a3', name: '增能时刻', desc: '单日完成 5 件增能事', icon: 'spark',   tint: '#9A86E0', got: maxGainCount >= 5 },
+    { id: 'a4', name: '断舍离',   desc: '某天把耗能控制在 10 以内', icon: 'leaf', tint: '#6FBF9A', got: lowDrainDay },
+    { id: 'a5', name: '七日连续', desc: '连续记录 7 天',     icon: 'flame',   tint: '#EE8FA3', got: streak >= 7 },
+    { id: 'a6', name: '充电达人', desc: '累计增能 1000',     icon: 'battery', tint: '#7FB7D8', got: totalGain >= 1000 },
+  ];
+  const got = list.filter(a => a.got).length;
+
+  const bannerTitle = streak > 0 ? `连续记录 ${streak} 天 🔥` : '今天，就是第一天 🌱';
+  const bannerSub = streak === 0 ? '完成第一件事，点亮属于你的第一天。'
+    : streak < 7 ? `再坚持 ${7 - streak} 天就能解锁「七日连续」，你做得很好。`
+    : '你已经把记录变成了习惯，太棒了。';
+
+  return (
+    <div className="fade-page">
+      <div className="topbar"><div><div className="greeting">成就</div><div className="subgreet">每一点积累，都是对自己的温柔。</div></div>
+        <div className="date-pill">已解锁 {got} / {list.length}</div></div>
+
+      <div className="card card-pad" style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 20, background: 'linear-gradient(120deg, var(--amber-tint), var(--surface))' }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'radial-gradient(circle at 36% 30%, var(--amber-2), var(--amber))', display: 'grid', placeItems: 'center', boxShadow: '0 8px 22px rgba(232,163,61,0.4)', color: '#fff' }}><Icon name="flame" size={30} /></div>
+        <div>
+          <div style={{ fontFamily: 'var(--font-round)', fontSize: 22 }}>{bannerTitle}</div>
+          <div style={{ color: 'var(--ink-2)', fontSize: 14, marginTop: 4 }}>{bannerSub}</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+        {list.map((a, i) => (
+          <div key={a.id} className="card card-pad rise" style={{ animationDelay: `${i*0.05}s`, textAlign: 'center', opacity: a.got ? 1 : 0.62, filter: a.got ? 'none' : 'grayscale(0.5)' }}>
+            <div style={{ width: 60, height: 60, borderRadius: '50%', margin: '0 auto 14px', display: 'grid', placeItems: 'center', color: '#fff',
+              background: a.got ? `radial-gradient(circle at 36% 30%, ${a.tint}, ${a.tint})` : 'var(--bg-2)' }}>
+              <Icon name={a.icon} size={28} stroke={2} style={a.got ? null : { color: 'var(--ink-3)' }} />
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>{a.name}</div>
+            <div style={{ fontSize: 13, color: 'var(--ink-2)', marginTop: 6 }}>{a.desc}</div>
+            {!a.got && <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 10, fontWeight: 600 }}>未解锁</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   设置
+   ============================================================ */
+function Settings({ initial, setInitial }) {
+  return (
+    <div className="fade-page">
+      <div className="topbar"><div><div className="greeting">设置</div><div className="subgreet">把能量系统调成最适合你的样子。</div></div></div>
+
+      <div className="card card-pad" style={{ marginBottom: 16 }}>
+        <div className="card-title">每日初始能量</div>
+        <div className="card-sub" style={{ marginBottom: 18 }}>每天清晨，你的能量从这里开始。给自己一个合理的起点（10–50）。</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <input type="range" min="10" max="50" step="5" value={initial} onChange={e => setInitial(+e.target.value)} style={{ flex: 1, accentColor: 'var(--gain)' }} />
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, minWidth: 80, justifyContent: 'flex-end' }}>
+            <span className="energy-num" style={{ fontSize: 34, color: 'var(--gain)' }}>{initial}</span>
+            <span style={{ color: 'var(--ink-3)', fontSize: 14 }}>点</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="card card-pad" style={{ marginBottom: 16 }}>
+        <div className="card-title" style={{ marginBottom: 14 }}>能量哲学</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.7 }}>
+          <div>🌱 做<b style={{ color: 'var(--gain)' }}>快乐的、有收获、有价值感</b>的事 —— 能量增加。</div>
+          <div>🪫 做<b style={{ color: 'var(--drain)' }}>被迫的、琐碎的、无聊的、过分困难</b>的事 —— 能量消耗。</div>
+          <div>每件事是增能还是耗能，<b>都由你自己决定</b>。同一件事，对不同的人意义不同。</div>
+        </div>
+      </div>
+
+      <div className="card card-pad">
+        <div className="card-title" style={{ marginBottom: 14 }}>偏好</div>
+        <ToggleRow label="完成任务时播放能量动效" defOn />
+        <ToggleRow label="每晚 21:00 提醒回顾今日能量" defOn />
+        <ToggleRow label="周日发送本周能量小结" />
+      </div>
+    </div>
+  );
+}
+function ToggleRow({ label, defOn }) {
+  const [on, setOn] = React.useState(!!defOn);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
+      <span style={{ fontSize: 14, color: 'var(--ink)' }}>{label}</span>
+      <button onClick={() => setOn(!on)} style={{ width: 46, height: 27, borderRadius: 999, background: on ? 'var(--gain)' : 'var(--line-2)', position: 'relative', transition: 'background .2s' }}>
+        <span style={{ position: 'absolute', top: 3, left: on ? 22 : 3, width: 21, height: 21, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'left .2s' }} />
+      </button>
+    </div>
+  );
+}
+
+Object.assign(window, { TaskModal, Stats, Review, Achievements, Settings });
+
+  </script>
+
+  <!-- ==== summary.jsx ==== -->
+  <script type="text/babel" data-presets="react">
+/* ============================================================
+   summary.jsx — 总结：今日 / 本月 / 本年（逐层下钻）
+   年 → 点月份 → 月 → 点日期 → 当天完成事项
+   ============================================================ */
+
+/* 净能量 → 马卡龙底色 + 文字色 */
+function netColor(net, has) {
+  if (!has) return { bg: 'var(--surface-2)', fg: 'var(--ink-3)', border: 'var(--line)' };
+  if (net > 0) { const i = Math.min(1, net / 28); return { bg: `oklch(${0.955 - 0.10 * i} ${0.05 + 0.07 * i} 158)`, fg: 'var(--gain)', border: 'transparent' }; }
+  if (net < 0) { const i = Math.min(1, -net / 28); return { bg: `oklch(${0.955 - 0.08 * i} ${0.05 + 0.07 * i} 18)`, fg: 'var(--drain)', border: 'transparent' }; }
+  return { bg: 'var(--bg-2)', fg: 'var(--ink-2)', border: 'transparent' };
+}
+function weekdayOf(y, m, d) { return WEEKDAY_LABELS[new Date(y, m - 1, d).getDay()]; }
+
+/* ---- 一件完成事项的小行 ---- */
+function TaskMini({ t }) {
+  const { map } = React.useContext(CatCtx);
+  const c = ptsColor(t.pts);
+  const cat = map[t.cat];
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span className="chip-dot" style={{ background: cat ? cat.color : 'var(--ink-3)' }} />
+      <span style={{ flex: 1, fontSize: 14, color: 'var(--ink)' }}>{t.title}</span>
+      <span style={{ fontFamily: 'var(--font-disp)', fontWeight: 600, fontSize: 14, color: c.deep }}>{t.type === 'gain' ? '+' : '−'}{t.pts}</span>
+    </div>
+  );
+}
+
+/* ---- 充电 / 消耗 两栏 ---- */
+function GainDrainColumns({ tasks }) {
+  const gain = tasks.filter(t => t.type === 'gain');
+  const drain = tasks.filter(t => t.type === 'drain');
+  const Col = ({ title, emoji, items, tint, empty }) => (
+    <div className="card card-pad">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <span style={{ fontSize: 17 }}>{emoji}</span><span className="card-title">{title}</span>
+        <span className="delta" style={{ marginLeft: 'auto', background: 'var(--bg-2)', color: tint }}>{items.length}</span>
+      </div>
+      {items.length === 0 ? <div style={{ color: 'var(--ink-3)', fontSize: 13 }}>{empty}</div> :
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>{items.map(t => <TaskMini key={t.id} t={t} />)}</div>}
+    </div>
+  );
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <Col title="为你充电的事" emoji="🌱" items={gain} tint="var(--gain)" empty="这天没有增能记录。" />
+      <Col title="消耗了你的事" emoji="🪫" items={drain} tint="var(--drain)" empty="这天没有被消耗，真好。" />
+    </div>
+  );
+}
+
+/* ---- 三个数字小结 ---- */
+function NetTriple({ a, size = 26 }) {
+  return (
+    <div style={{ display: 'flex', gap: 22 }}>
+      <div><div className="energy-num" style={{ fontSize: size, color: 'var(--gain)' }}>+{a.gain}</div><div style={{ fontSize: 12, color: 'var(--ink-3)' }}>充电</div></div>
+      <div><div className="energy-num" style={{ fontSize: size, color: 'var(--drain)' }}>−{a.drain}</div><div style={{ fontSize: 12, color: 'var(--ink-3)' }}>消耗</div></div>
+      <div><div className="energy-num" style={{ fontSize: size, color: 'var(--ink)' }}>{a.net >= 0 ? '+' : '−'}{Math.abs(a.net)}</div><div style={{ fontSize: 12, color: 'var(--ink-3)' }}>净值</div></div>
+    </div>
+  );
+}
+
+/* ---- 类别分布条 ---- */
+function CatBreakdown({ cat }) {
+  const { map } = React.useContext(CatCtx);
+  const list = Object.entries(cat).filter(([k]) => map[k]).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(...list.map(c => c[1]), 1);
+  if (!list.length) return <div style={{ color: 'var(--ink-3)', fontSize: 14 }}>暂无增能记录</div>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+      {list.map(([k, v]) => (
+        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 56, fontSize: 13, fontWeight: 600, color: 'var(--ink-2)' }}>{map[k].label}</div>
+          <div className="bar-track" style={{ flex: 1 }}><div className="bar-fill" style={{ width: `${v / max * 100}%`, background: map[k].color }} /></div>
+          <div style={{ width: 44, textAlign: 'right', fontFamily: 'var(--font-disp)', fontWeight: 600, color: map[k].color }}>+{v}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ============================================================
+   今日总结
+   ============================================================ */
+function TodayView({ energy, tasks }) {
+  const mood = energyMood(energy.current);
+  const done = tasks.filter(t => t.done);
+  const pending = tasks.filter(t => !t.done);
+  return (
+    <div className="fade-page">
+      <div className="card" style={{ overflow: 'hidden', marginBottom: 18 }}>
+        <div style={{ padding: '30px 28px', background: `linear-gradient(120deg, ${mood.c1}33, ${mood.c2}18)`, display: 'flex', alignItems: 'center', gap: 26 }}>
+          <EnergyOrb current={energy.current} size={158} showLabel={false} />
+          <div>
+            <div style={{ fontFamily: 'var(--font-round)', fontSize: 24, color: 'var(--ink)' }}>{mood.msg}</div>
+            <div style={{ color: 'var(--ink-2)', fontSize: 15, marginTop: 8, maxWidth: 380 }}>{mood.hint}</div>
+            <div style={{ marginTop: 18 }}><NetTriple a={energy} /></div>
+          </div>
+        </div>
+      </div>
+      <GainDrainColumns tasks={done} />
+      {pending.length > 0 &&
+        <div className="card card-pad" style={{ marginTop: 16 }}>
+          <div className="card-title" style={{ marginBottom: 4 }}>还没做的 {pending.length} 件</div>
+          <div className="card-sub" style={{ marginBottom: 14 }}>没关系，明天还有机会。它们暂时不计入今天的能量。</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {pending.map(t => <span key={t.id} className="chip">{t.title} <span style={{ color: t.type === 'gain' ? 'var(--gain)' : 'var(--drain)', fontFamily: 'var(--font-disp)' }}>{t.type === 'gain' ? '+' : '−'}{t.pts}</span></span>)}
+          </div>
+        </div>}
+    </div>
+  );
+}
+
+/* ============================================================
+   本月总结（日历下钻）
+   ============================================================ */
+function MonthView({ y, m, tasksFor, onPickDay, onBack, onPrev, onNext, canNext }) {
+  const agg = monthAgg(y, m, tasksFor);
+  const lead = firstWeekday(y, m);
+  const cells = [...Array(lead).fill(null), ...agg.days];
+  const avgNet = agg.active ? Math.round(agg.net / agg.active) : 0;
+
+  return (
+    <div className="fade-page">
+      <div style={navBar}>
+        <button className="link-back" onClick={onBack}><Icon name="chevron" size={16} style={{ transform: 'rotate(180deg)' }} /> {y} 年</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="icon-btn" style={miniNav} onClick={onPrev}><Icon name="chevron" size={16} style={{ transform: 'rotate(180deg)' }} /></button>
+          <div style={{ fontFamily: 'var(--font-round)', fontSize: 22, minWidth: 64, textAlign: 'center' }}>{MONTH_LABELS[m - 1]}</div>
+          <button className="icon-btn" style={{ ...miniNav, opacity: canNext ? 1 : 0.35, pointerEvents: canNext ? 'auto' : 'none' }} onClick={onNext}><Icon name="chevron" size={16} /></button>
+        </div>
+        <div style={{ width: 70 }} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: 16, alignItems: 'start' }}>
+        {/* calendar */}
+        <div className="card card-pad">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 6, marginBottom: 8 }}>
+            {WEEKDAY_LABELS.map(w => <div key={w} style={{ textAlign: 'center', fontSize: 12, fontWeight: 600, color: 'var(--ink-3)' }}>{w}</div>)}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 6 }}>
+            {cells.map((c, i) => {
+              if (!c) return <div key={'b' + i} />;
+              const has = !c.future && c.count > 0;
+              const nc = netColor(c.net, has);
+              const isToday = y === TODAY.y && m === TODAY.m && c.d === TODAY.d;
+              return (
+                <button key={c.d} disabled={!has} onClick={() => onPickDay(c.d)}
+                  style={{ aspectRatio: '1', borderRadius: 12, background: nc.bg, color: c.future ? 'var(--line-2)' : nc.fg,
+                    border: isToday ? '2px solid var(--ink)' : `1px solid ${has ? 'transparent' : 'var(--line)'}`,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                    cursor: has ? 'pointer' : 'default', transition: 'transform .12s', position: 'relative' }}>
+                  <span style={{ fontFamily: 'var(--font-disp)', fontWeight: 600, fontSize: 14 }}>{c.d}</span>
+                  {has && <span style={{ fontSize: 10, fontWeight: 700 }}>{c.net >= 0 ? '+' : '−'}{Math.abs(c.net)}</span>}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16, fontSize: 12, color: 'var(--ink-3)' }}>
+            <span style={legendDot('oklch(0.86 0.1 158)')} /> 增能日
+            <span style={legendDot('oklch(0.86 0.1 18)')} /> 耗能日
+            <span style={{ marginLeft: 'auto' }}>点日期查看当天完成事项 →</span>
+          </div>
+        </div>
+
+        {/* month stats */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="card card-pad">
+            <div className="card-title" style={{ marginBottom: 14 }}>{MONTH_LABELS[m - 1]}总览</div>
+            <NetTriple a={agg} size={28} />
+            <div style={{ display: 'flex', gap: 24, marginTop: 18, fontSize: 13, color: 'var(--ink-2)' }}>
+              <div>记录 <b style={{ fontFamily: 'var(--font-disp)', color: 'var(--ink)' }}>{agg.active}</b> 天</div>
+              <div>日均净值 <b style={{ fontFamily: 'var(--font-disp)', color: avgNet >= 0 ? 'var(--gain)' : 'var(--drain)' }}>{avgNet >= 0 ? '+' : ''}{avgNet}</b></div>
+              {agg.best && <div>最佳 <b style={{ fontFamily: 'var(--font-disp)', color: 'var(--gain)' }}>{m}/{agg.best.d}</b></div>}
+            </div>
+          </div>
+          <div className="card card-pad">
+            <div className="card-title" style={{ marginBottom: 4 }}>本月增能来源</div>
+            <div className="card-sub" style={{ marginBottom: 16 }}>哪些类别在为你充电</div>
+            <CatBreakdown cat={agg.cat} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   本年总结（点月份下钻）
+   ============================================================ */
+function YearView({ y, tasksFor, onPickMonth, onPrev, onNext, canNext }) {
+  const agg = yearAgg(y, tasksFor);
+  const maxAbs = Math.max(...agg.months.map(mo => Math.abs(mo.net)), 1);
+  return (
+    <div className="fade-page">
+      <div style={{ ...navBar, justifyContent: 'center', gap: 16 }}>
+        <button className="icon-btn" style={miniNav} onClick={onPrev}><Icon name="chevron" size={16} style={{ transform: 'rotate(180deg)' }} /></button>
+        <div style={{ fontFamily: 'var(--font-round)', fontSize: 24, minWidth: 96, textAlign: 'center' }}>{y} 年</div>
+        <button className="icon-btn" style={{ ...miniNav, opacity: canNext ? 1 : 0.35, pointerEvents: canNext ? 'auto' : 'none' }} onClick={onNext}><Icon name="chevron" size={16} /></button>
+      </div>
+
+      <div className="card card-pad" style={{ marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        <div><div className="card-title">{y} 年能量总览</div><div className="card-sub">记录了 {agg.active} 天</div></div>
+        <NetTriple a={agg} size={30} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+        {agg.months.map(mo => {
+          const has = mo.active > 0;
+          const nc = netColor(mo.net, has);
+          return (
+            <button key={mo.m} disabled={!has} onClick={() => onPickMonth(mo.m)} className={has ? 'month-card' : ''}
+              style={{ textAlign: 'left', padding: 18, borderRadius: 'var(--r-md)', background: 'var(--surface)', border: '1px solid var(--line)',
+                boxShadow: 'var(--sh-sm)', cursor: has ? 'pointer' : 'default', opacity: has ? 1 : 0.5, transition: 'transform .14s, box-shadow .18s' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <span style={{ fontWeight: 700, fontSize: 16, whiteSpace: 'nowrap' }}>{MONTH_LABELS[mo.m - 1]}</span>
+                {has && <span style={{ width: 26, height: 26, borderRadius: '50%', background: nc.bg, display: 'grid', placeItems: 'center', color: nc.fg }}><Icon name="chevron" size={14} /></span>}
+              </div>
+              {has ? <>
+                <div className="energy-num" style={{ fontSize: 26, color: nc.fg }}>{mo.net >= 0 ? '+' : '−'}{Math.abs(mo.net)}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2, marginBottom: 12 }}>净能量 · {mo.active} 天</div>
+                <div style={{ display: 'flex', height: 6, borderRadius: 999, overflow: 'hidden', background: 'var(--bg-2)' }}>
+                  <div style={{ width: `${mo.gain / (mo.gain + mo.drain || 1) * 100}%`, background: 'var(--gain-2)' }} />
+                  <div style={{ flex: 1, background: 'var(--drain-2)' }} />
+                </div>
+              </> : <div style={{ fontSize: 13, color: 'var(--ink-3)', paddingTop: 4 }}>暂无记录</div>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   某天详情弹窗
+   ============================================================ */
+function DayDetailModal({ y, m, d, tasks, onClose }) {
+  const a = aggTasks(tasks);
+  return (
+    <Modal onClose={onClose}>
+      <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-round)', fontSize: 20 }}>{m} 月 {d} 日 · 周{weekdayOf(y, m, d)}</div>
+          <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 2 }}>当天完成 {a.count} 件事</div>
+        </div>
+        <button className="icon-btn" style={{ width: 34, height: 34, boxShadow: 'none', border: 'none', background: 'var(--bg-2)' }} onClick={onClose}><Icon name="close" size={18} /></button>
+      </div>
+      <div style={{ padding: '20px 26px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>
+        <NetTriple a={a} size={24} />
+      </div>
+      <div style={{ padding: 22, maxHeight: '50vh', overflowY: 'auto' }} className="scroll">
+        <GainDrainColumns tasks={tasks} />
+      </div>
+    </Modal>
+  );
+}
+
+/* ============================================================
+   Summary 容器
+   ============================================================ */
+function Summary({ energy, tasks, logMap = {} }) {
+  const [level, setLevel] = React.useState('today');
+  const [selYear, setSelYear] = React.useState(TODAY.y);
+  const [selMonth, setSelMonth] = React.useState(TODAY.m);
+  const [day, setDay] = React.useState(null);
+
+  const liveDone = React.useMemo(() => tasks.filter(t => t.done), [tasks]);
+  const tasksFor = React.useCallback((y, m, d) =>
+    (y === TODAY.y && m === TODAY.m && d === TODAY.d) ? liveDone : (logMap[dKey(y, m, d)] || []), [liveDone, logMap]);
+
+  const go = (lv) => { setLevel(lv); setSelYear(TODAY.y); setSelMonth(TODAY.m); setDay(null); };
+
+  const monthCanNext = !(selYear === TODAY.y && selMonth >= TODAY.m);
+  const yearCanNext = selYear < TODAY.y;
+  const prevMonth = () => { if (selMonth === 1) { setSelMonth(12); setSelYear(y => y - 1); } else setSelMonth(mo => mo - 1); };
+  const nextMonth = () => { if (!monthCanNext) return; if (selMonth === 12) { setSelMonth(1); setSelYear(y => y + 1); } else setSelMonth(mo => mo + 1); };
+
+  return (
+    <div>
+      <div className="topbar">
+        <div><div className="greeting">总结</div><div className="subgreet">慢下来，回看你的能量故事。</div></div>
+        <div className="seg">
+          {[['today', '今日'], ['month', '本月'], ['year', '本年']].map(([k, l]) => (
+            <button key={k} className={`seg-btn ${level === k ? 'active' : ''}`} onClick={() => go(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
+
+      {level === 'today' && <TodayView energy={energy} tasks={tasks} />}
+
+      {level === 'month' &&
+        <MonthView y={selYear} m={selMonth} tasksFor={tasksFor} canNext={monthCanNext}
+          onPickDay={(d) => setDay(d)} onBack={() => setLevel('year')} onPrev={prevMonth} onNext={nextMonth} />}
+
+      {level === 'year' &&
+        <YearView y={selYear} tasksFor={tasksFor} canNext={yearCanNext}
+          onPickMonth={(m) => { setSelMonth(m); setLevel('month'); }}
+          onPrev={() => setSelYear(y => y - 1)} onNext={() => yearCanNext && setSelYear(y => y + 1)} />}
+
+      {day != null &&
+        <DayDetailModal y={selYear} m={selMonth} d={day} tasks={tasksFor(selYear, selMonth, day)} onClose={() => setDay(null)} />}
+    </div>
+  );
+}
+
+const navBar = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 };
+const miniNav = { width: 36, height: 36 };
+const legendDot = (bg) => ({ width: 12, height: 12, borderRadius: 4, background: bg, display: 'inline-block', marginRight: -4 });
+
+Object.assign(window, { Summary });
+
+  </script>
+
+  <!-- ==== app.jsx ==== -->
+  <script type="text/babel" data-presets="react">
+/* ============================================================
+   app.jsx — 状态 · 路由 · 持久化 · 能量反馈动效
+   ============================================================ */
+const { useState, useEffect, useCallback, useRef } = React;
+
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+const clampInit = (v) => Math.min(50, Math.max(10, typeof v === 'number' ? v : 30));
+
+/* ============================================================
+   ☁  云端：Supabase 客户端 + 每用户整份状态读写
+   未配置时 SB = null → 自动「本地模式」
+   ============================================================ */
+const SB_CFG = window.SUPABASE_CONFIG || {};
+const SB_READY = !!(SB_CFG.url && SB_CFG.anonKey && !/^YOUR_/.test(SB_CFG.url) && !/^YOUR_/.test(SB_CFG.anonKey) && window.supabase);
+const SB = SB_READY ? window.supabase.createClient(SB_CFG.url, SB_CFG.anonKey) : null;
+
+async function saveRemoteState(userId, state) {
+  const row = { user_id: userId, tasks: state.tasks, cats: state.cats, initial: state.initial, updated_at: new Date().toISOString() };
+  if (state.lastDate) row.last_date = state.lastDate;
+  const { error } = await SB.from('user_state').upsert(row, { onConflict: 'user_id' });
+  if (error) { console.warn('[sync] save 失败', error.message); throw error; }
+}
+async function loadRemoteState(userId) {
+  const { data, error } = await SB.from('user_state').select('tasks, cats, initial, last_date').eq('user_id', userId).maybeSingle();
+  if (error) { console.warn('[sync] load 失败', error.message); throw error; }
+  return data;
+}
+
+/* daily_log：每个已结算的日期一行 */
+async function loadRemoteLog(userId) {
+  const { data, error } = await SB.from('daily_log').select('date, tasks').eq('user_id', userId);
+  if (error) { console.warn('[sync] log load 失败', error.message); throw error; }
+  const map = {};
+  (data || []).forEach(r => { map[isoToKey(r.date)] = r.tasks || []; });
+  return map;
+}
+async function saveRemoteLogDay(userId, iso, tasks, agg) {
+  const { error } = await SB.from('daily_log').upsert(
+    { user_id: userId, date: iso, tasks, gain: agg.gain, drain: agg.drain, net: agg.net },
+    { onConflict: 'user_id,date' }
+  );
+  if (error) { console.warn('[sync] log save 失败', error.message); throw error; }
+}
+
+/* 纯函数：判断是否需要翻篇，返回 {archive?, newTasks, archivedKey?, archivedIso?} */
+function planRollover(prevTasks, lastDateIso) {
+  // 首次（无 last_date）：不归档，只把今天定为活动日
+  if (!lastDateIso || lastDateIso === TODAY_ISO) return { changed: false, newTasks: prevTasks };
+  // 跨天了：把上一活动日的「已完成」任务归档，未完成的顺延到今天
+  const done = prevTasks.filter(t => t.done);
+  const carry = prevTasks.filter(t => !t.done).map(t => ({ ...t, done: false }));
+  return {
+    changed: true,
+    archivedIso: lastDateIso,
+    archivedKey: isoToKey(lastDateIso),
+    archivedTasks: done,
+    archivedAgg: aggTasks(done),
+    newTasks: carry,
+  };
+}
+function friendlyAuthError(msg) {
+  if (!msg) return '出了点问题，请重试。';
+  if (/Invalid login credentials/i.test(msg)) return '邮箱或密码不正确。';
+  if (/already registered|already been registered/i.test(msg)) return '该邮箱已注册，请直接登录。';
+  if (/Password should be at least/i.test(msg)) return '密码至少需要 6 位。';
+  if (/Unable to validate email|invalid format/i.test(msg)) return '邮箱格式不正确。';
+  if (/Email not confirmed/i.test(msg)) return '邮箱还未确认，请先点开邮件里的确认链接。';
+  return msg;
+}
+
+function App({ session }) {
+  const cloud = !!(SB && session);
+  const userId = cloud ? session.user.id : 'local';
+  const K = (k) => `et_${k}_${userId}`;
+
+  const [tasks, setTasks]     = useState(() => LS.get(K('tasks'), SEED_TASKS));
+  const [initial, setInitial] = useState(() => clampInit(LS.get(K('initial'), 30)));
+  const [cats, setCats]       = useState(() => { const c = LS.get(K('cats'), DEFAULT_CATEGORIES); return Array.isArray(c) && c.length ? c : DEFAULT_CATEGORIES; });
+  const [logMap, setLogMap]   = useState(() => LS.get(K('log'), {}));      // { 'y-m-d': [完成任务...] }
+  const [lastDate, setLastDate] = useState(() => LS.get(K('lastDate'), null)); // ISO 'YYYY-MM-DD'
+  const [route, setRoute]     = useState(() => { const r = LS.get('et_route', 'today'); return r === 'review' ? 'summary' : r; });
+  const [variant, setVariant] = useState(() => LS.get('et_variant', 'orb'));
+  const [modal, setModal]     = useState(null);   // null | {} (new) | task (edit)
+  const [sparks, setSparks]   = useState([]);
+  const [sync, setSync]       = useState(cloud ? 'loading' : 'local'); // loading | saving | synced | local | error
+
+  const hydrated = useRef(false);
+  const saveTimer = useRef(null);
+
+  /* ---- 进入时：拉取状态 + 历史，并执行「跨天结算」---- */
+  useEffect(() => {
+    let alive = true;
+    hydrated.current = false;
+    if (cloud) setSync('loading');
+    (async () => {
+      try {
+        let curTasks, curCats, curInitial, curLast, log;
+        if (cloud) {
+          const remote = await loadRemoteState(userId);
+          log = await loadRemoteLog(userId);
+          if (remote) {
+            curTasks   = Array.isArray(remote.tasks) ? remote.tasks : [];
+            curCats    = Array.isArray(remote.cats) && remote.cats.length ? remote.cats : DEFAULT_CATEGORIES;
+            curInitial = clampInit(remote.initial);
+            curLast    = remote.last_date || null;
+          } else {
+            curTasks = []; curCats = DEFAULT_CATEGORIES; curInitial = clampInit(initial); curLast = null; // 首次登录：干净起步
+          }
+        } else {
+          curTasks = tasks; curCats = cats; curInitial = initial; curLast = lastDate; log = { ...logMap };
+        }
+
+        const lastIso = curLast ? String(curLast).slice(0, 10) : null;
+        const plan = planRollover(curTasks, lastIso);
+        if (plan.changed) {
+          log = { ...log, [plan.archivedKey]: plan.archivedTasks };
+          curTasks = plan.newTasks;
+          if (cloud && plan.archivedTasks.length) await saveRemoteLogDay(userId, plan.archivedIso, plan.archivedTasks, plan.archivedAgg);
+        }
+        if (!alive) return;
+        setTasks(curTasks); setCats(curCats); setInitial(curInitial); setLogMap(log); setLastDate(TODAY_ISO);
+        if (cloud) await saveRemoteState(userId, { tasks: curTasks, cats: curCats, initial: curInitial, lastDate: TODAY_ISO });
+        hydrated.current = true;
+        setSync(cloud ? 'synced' : 'local');
+      } catch (e) {
+        if (alive) { hydrated.current = true; setSync(cloud ? 'error' : 'local'); }
+      }
+    })();
+    return () => { alive = false; };
+  }, [userId, cloud]);
+
+  /* ---- 跨午夜仍开着：检测到日期变化就刷新，让结算逻辑重新跑 ---- */
+  useEffect(() => {
+    const check = () => {
+      const n = new Date();
+      if (ymdToIso(n.getFullYear(), n.getMonth() + 1, n.getDate()) !== TODAY_ISO) window.location.reload();
+    };
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('focus', check);
+    const t = setInterval(check, 60000);
+    return () => { document.removeEventListener('visibilitychange', check); window.removeEventListener('focus', check); clearInterval(t); };
+  }, []);
+
+  /* ---- 本地缓存（即时、断网也能看）---- */
+  useEffect(() => { LS.set(K('tasks'), tasks); }, [tasks]);
+  useEffect(() => { LS.set(K('initial'), initial); }, [initial]);
+  useEffect(() => { LS.set(K('cats'), cats); }, [cats]);
+  useEffect(() => { LS.set(K('log'), logMap); }, [logMap]);
+  useEffect(() => { LS.set(K('lastDate'), lastDate); }, [lastDate]);
+  useEffect(() => LS.set('et_route', route), [route]);
+  useEffect(() => LS.set('et_variant', variant), [variant]);
+
+  /* ---- 防抖云端同步（user_state）---- */
+  useEffect(() => {
+    if (!cloud || !hydrated.current) return;
+    setSync('saving');
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try { await saveRemoteState(userId, { tasks, cats, initial, lastDate }); setSync('synced'); }
+      catch { setSync('error'); }
+    }, 700);
+    return () => clearTimeout(saveTimer.current);
+  }, [tasks, cats, initial, cloud]);
+
+  const signOut = useCallback(() => { if (SB) SB.auth.signOut(); }, []);
+
+  /* ---- 分类增改删 ---- */
+  const addCat = useCallback((label, color) => {
+    const id = 'c' + Date.now().toString(36);
+    setCats(prev => [...prev, { id, label, color }]);
+    return id;
+  }, []);
+  const updateCat = useCallback((id, patch) => setCats(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c)), []);
+  const deleteCat = useCallback((id) => setCats(prev => prev.length > 1 ? prev.filter(c => c.id !== id) : prev), []);
+  const catCtxValue = React.useMemo(() => ({
+    list: cats,
+    map: Object.fromEntries(cats.map(c => [c.id, c])),
+    addCat, updateCat, deleteCat,
+  }), [cats, addCat, updateCat, deleteCat]);
+
+  const energy = computeEnergy(tasks, initial);
+
+  const fireSpark = (task, e) => {
+    const id = Date.now() + Math.random();
+    const x = e ? e.clientX : window.innerWidth / 2;
+    const y = e ? e.clientY : 120;
+    const text = (task.type === 'gain' ? '+' : '−') + task.pts;
+    const color = task.type === 'gain' ? 'var(--gain)' : 'var(--drain)';
+    setSparks(s => [...s, { id, x, y, text, color }]);
+    setTimeout(() => setSparks(s => s.filter(k => k.id !== id)), 1000);
+  };
+
+  const onToggle = useCallback((id, e) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id !== id) return t;
+      const nt = { ...t, done: !t.done };
+      if (nt.done) fireSpark(nt, e);
+      return nt;
+    }));
+  }, []);
+
+  const onSave = (data) => {
+    if (data.id) setTasks(prev => prev.map(t => t.id === data.id ? { ...t, ...data } : t));
+    else setTasks(prev => [...prev, { ...data, id: 'u' + Date.now(), done: false }]);
+    setModal(null);
+  };
+  const onQuickAdd = (data) => setTasks(prev => [...prev, { ...data, id: 'u' + Date.now(), done: false }]);
+  const onDelete = (id) => { setTasks(prev => prev.filter(t => t.id !== id)); setModal(null); };
+
+  const homeProps = { tasks, energy, variant, setVariant, onToggle, onEdit: setModal, onDelete, onAdd: onQuickAdd };
+
+  return (
+    <CatCtx.Provider value={catCtxValue}>
+    <div className="app">
+      <Sidebar route={route} setRoute={setRoute} energy={energy} onAdd={() => setModal({})}
+        account={cloud ? { email: session.user.email, sync, onSignOut: signOut } : (SB ? null : { local: true })} />
+      <main className="main scroll">
+        <div className="main-inner">
+          {route === 'today'    && <Home {...homeProps} />}
+          {route === 'stats'    && <Stats energy={energy} tasks={tasks} logMap={logMap} />}
+          {route === 'summary'  && <Summary energy={energy} tasks={tasks} logMap={logMap} />}
+          {route === 'achieve'  && <Achievements logMap={logMap} tasks={tasks} />}
+          {route === 'settings' && <Settings initial={initial} setInitial={setInitial} />}
+        </div>
+      </main>
+
+      {modal && <TaskModal initial={modal} onSave={onSave} onClose={() => setModal(null)} onDelete={onDelete} />}
+
+      {sparks.map(s => (
+        <div key={s.id} className="spark" style={{ left: s.x, top: s.y, color: s.color, fontSize: 26 }}>{s.text}</div>
+      ))}
+    </div>
+    </CatCtx.Provider>
+  );
+}
+
+/* ============================================================
+   认证：登录 / 注册界面（马卡龙风格）
+   ============================================================ */
+function AuthScreen() {
+  const [mode, setMode]   = useState('signin'); // signin | signup
+  const [email, setEmail] = useState('');
+  const [pw, setPw]       = useState('');
+  const [busy, setBusy]   = useState(false);
+  const [err, setErr]     = useState(null);
+  const [msg, setMsg]     = useState(null);
+
+  const submit = async () => {
+    setErr(null); setMsg(null);
+    if (!email.trim() || !pw) { setErr('请填写邮箱和密码。'); return; }
+    setBusy(true);
+    try {
+      if (mode === 'signin') {
+        const { error } = await SB.auth.signInWithPassword({ email: email.trim(), password: pw });
+        if (error) throw error;
+      } else {
+        const { data, error } = await SB.auth.signUp({ email: email.trim(), password: pw });
+        if (error) throw error;
+        if (!data.session) { setMsg('注册成功！请到邮箱点击确认链接，然后回来登录。'); setMode('signin'); }
+      }
+    } catch (e) { setErr(friendlyAuthError(e.message)); }
+    finally { setBusy(false); }
+  };
+
+  const inp = { width: '100%', padding: '13px 16px', border: '1.5px solid var(--line-2)', borderRadius: 'var(--r-sm)', fontSize: 15, outline: 'none', background: 'var(--surface-2)' };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24,
+      background: 'radial-gradient(900px 600px at 15% -8%, rgba(166,224,200,0.32), transparent 60%), radial-gradient(820px 600px at 105% 4%, rgba(243,168,190,0.28), transparent 55%), radial-gradient(700px 600px at 60% 112%, rgba(183,191,238,0.24), transparent 55%), var(--bg)' }}>
+      <div className="card" style={{ width: '100%', maxWidth: 410, padding: '38px 34px', borderRadius: 'var(--r-xl)', boxShadow: 'var(--sh-lg)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 26 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', marginBottom: 16,
+            background: 'radial-gradient(circle at 36% 30%, #FBE6A6, #F0C97C 78%)',
+            boxShadow: '0 12px 30px rgba(240,201,124,0.45), inset 0 8px 18px rgba(255,255,255,0.5)' }} />
+          <div style={{ fontFamily: 'var(--font-round)', fontSize: 26, color: 'var(--ink)' }}>INTJ能量板</div>
+          <div style={{ fontSize: 14, color: 'var(--ink-2)', marginTop: 6 }}>
+            {mode === 'signin' ? '欢迎回来，继续记录你的能量。' : '创建账号，开始记录你的能量。'}
+          </div>
+        </div>
+
+        <div className="seg" style={{ width: '100%', marginBottom: 20, boxShadow: 'none', border: '1px solid var(--line)' }}>
+          <button className={`seg-btn ${mode === 'signin' ? 'active' : ''}`} style={{ flex: 1 }} onClick={() => { setMode('signin'); setErr(null); setMsg(null); }}>登录</button>
+          <button className={`seg-btn ${mode === 'signup' ? 'active' : ''}`} style={{ flex: 1 }} onClick={() => { setMode('signup'); setErr(null); setMsg(null); }}>注册</button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <input style={inp} type="email" autoComplete="email" placeholder="邮箱" value={email}
+            onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
+          <input style={inp} type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+            placeholder={mode === 'signin' ? '密码' : '密码（至少 6 位）'} value={pw}
+            onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
+
+          {err && <div style={{ fontSize: 13, color: 'var(--drain)', background: 'var(--drain-tint)', padding: '9px 13px', borderRadius: 'var(--r-sm)' }}>{err}</div>}
+          {msg && <div style={{ fontSize: 13, color: 'var(--gain)', background: 'var(--gain-tint)', padding: '9px 13px', borderRadius: 'var(--r-sm)' }}>{msg}</div>}
+
+          <button className="btn btn-gain btn-lg" style={{ width: '100%', marginTop: 4, opacity: busy ? 0.65 : 1, pointerEvents: busy ? 'none' : 'auto' }} onClick={submit}>
+            {busy ? '请稍候…' : (mode === 'signin' ? '登录' : '注册')}
+          </button>
+        </div>
+
+        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--ink-3)', marginTop: 20 }}>
+          {mode === 'signin'
+            ? <>还没有账号？<button style={{ color: 'var(--gain)', fontWeight: 700 }} onClick={() => { setMode('signup'); setErr(null); setMsg(null); }}>去注册</button></>
+            : <>已有账号？<button style={{ color: 'var(--gain)', fontWeight: 700 }} onClick={() => { setMode('signin'); setErr(null); setMsg(null); }}>去登录</button></>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Splash() {
+  return (
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--bg)' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 56, height: 56, borderRadius: '50%', margin: '0 auto 16px',
+          background: 'radial-gradient(circle at 36% 30%, #FBE6A6, #F0C97C 78%)',
+          boxShadow: '0 12px 30px rgba(240,201,124,0.45)', animation: 'pulseGlow 1.4s ease-in-out infinite' }} />
+        <div style={{ fontFamily: 'var(--font-round)', fontSize: 18, color: 'var(--ink-2)' }}>正在载入你的能量…</div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   Root：决定显示 登录 / 应用 / 本地模式
+   ============================================================ */
+function Root() {
+  const [session, setSession] = useState(undefined); // undefined = 还在确认登录态
+
+  useEffect(() => {
+    if (!SB) return;
+    SB.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: sub } = SB.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  if (!SB) return <App session={null} />;          // 未配置 → 本地模式
+  if (session === undefined) return <Splash />;     // 确认登录态中
+  if (!session) return <AuthScreen />;              // 未登录
+  return <App session={session} />;                 // 已登录 → 云端模式
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+
+  </script>
+
+</body>
+</html>
