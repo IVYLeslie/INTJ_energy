@@ -452,7 +452,7 @@ const ACHIEVEMENTS = [
 ];
 
 /* ---------- 能量计算 ---------- */
-const SCALE_MAX = 80; // 能量球“满格”的参考刻度（初始能量上限 50 + 当日增能空间）
+const SCALE_MAX = 50; // 能量球“满格”的参考刻度（满分 50）
 
 function computeEnergy(tasks, initial) {
   let gain = 0, drain = 0;
@@ -468,10 +468,10 @@ function computeEnergy(tasks, initial) {
 // 能量级别 → 马卡龙色 / 鼓励语
 function energyMood(current) {
   const p = current;
-  if (p >= 68) return { key: 'high',  msg: '今天的你光芒四射 ✨',     hint: '记得也给自己留一点放空的时间。', c1: '#B8EBD2', c2: '#79CBA4' };
-  if (p >= 48) return { key: 'good',  msg: '保持这个节奏，很棒～',     hint: '你正在把时间花在让自己开心的事上。', c1: '#C7ECC0', c2: '#8FCF9E' };
-  if (p >= 29) return { key: 'mid',   msg: '能量还够，慢慢来 🌿',      hint: '挑一件喜欢的小事，给自己充会儿电。', c1: '#FBE6A6', c2: '#F0C97C' };
-  if (p >= 13) return { key: 'low',   msg: '有点累了，照顾好自己',     hint: '也许可以把耗能的事往后挪一挪。', c1: '#FBD7B0', c2: '#F0AE82' };
+  if (p >= 42) return { key: 'high',  msg: '今天的你光芒四射 ✨',     hint: '记得也给自己留一点放空的时间。', c1: '#B8EBD2', c2: '#79CBA4' };
+  if (p >= 30) return { key: 'good',  msg: '保持这个节奏，很棒～',     hint: '你正在把时间花在让自己开心的事上。', c1: '#C7ECC0', c2: '#8FCF9E' };
+  if (p >= 18) return { key: 'mid',   msg: '能量还够，慢慢来 🌿',      hint: '挑一件喜欢的小事，给自己充会儿电。', c1: '#FBE6A6', c2: '#F0C97C' };
+  if (p >= 8)  return { key: 'low',   msg: '有点累了，照顾好自己',     hint: '也许可以把耗能的事往后挪一挪。', c1: '#FBD7B0', c2: '#F0AE82' };
   return            { key: 'empty', msg: '慢一点也没关系 🫧',        hint: '今天先休息，明天又是满格的一天。', c1: '#F8C2CE', c2: '#EE93A6' };
 }
 
@@ -1640,9 +1640,9 @@ function Settings({ initial, setInitial, prefs, setPrefs }) {
 
       <div className="card card-pad" style={{ marginBottom: 16 }}>
         <div className="card-title">每日初始能量</div>
-        <div className="card-sub" style={{ marginBottom: 18 }}>每天清晨，你的能量从这里开始。给自己一个合理的起点（10–50）。</div>
+        <div className="card-sub" style={{ marginBottom: 18 }}>每天清晨，你的能量从这里开始。给自己一个合理的起点（10–35）。</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <input type="range" min="10" max="50" step="5" value={initial} onChange={e => setInitial(+e.target.value)} style={{ flex: 1, accentColor: 'var(--gain)' }} />
+          <input type="range" min="10" max="35" step="5" value={initial} onChange={e => setInitial(+e.target.value)} style={{ flex: 1, accentColor: 'var(--gain)' }} />
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, minWidth: 80, justifyContent: 'flex-end' }}>
             <span className="energy-num" style={{ fontSize: 34, color: 'var(--gain)' }}>{initial}</span>
             <span style={{ color: 'var(--ink-3)', fontSize: 14 }}>点</span>
@@ -2013,7 +2013,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   del(k) { try { localStorage.removeItem(k); } catch {} },
 };
-const clampInit = (v) => Math.min(50, Math.max(10, typeof v === 'number' ? v : 30));
+const clampInit = (v) => Math.min(35, Math.max(10, typeof v === 'number' ? v : 30));
 const DEFAULT_PREFS = { anim: true, nightReminder: true, weeklySummary: false };
 
 /* ============================================================
