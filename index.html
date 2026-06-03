@@ -1393,20 +1393,28 @@ const inputStyle = { width: '100%', padding: '12px 15px', border: '1.5px solid v
    能量趋势
    ============================================================ */
 function WeekChart({ data }) {
-  const W = 720, H = 240, pad = 30, baseline = H * 0.62;
+  const W = 720, H = 240, pad = 30, baseline = H * 0.55;
   const n = data.length;
   const step = (W - pad * 2) / n;
-  const maxV = Math.max(...data.map(d => Math.max(d.gain || 0, d.drain || 0))) || 1;
-  const scale = (baseline - 24) / maxV;
+  // 上方留白 + 下方为坐标文字留白，分别计算可用高度，取较紧的比例 → 任何值都不超框
+  const topPad = 18, botPad = 30;
+  const upSpace = baseline - topPad;
+  const downSpace = (H - baseline) - botPad;
+  let upMax = 1, downMax = 1;
+  data.forEach(d => {
+    const g = d.gain || 0, dr = d.drain || 0, net = d.net || 0;
+    upMax = Math.max(upMax, g, net > 0 ? net : 0);
+    downMax = Math.max(downMax, dr, net < 0 ? -net : 0);
+  });
+  const scale = Math.min(upSpace / upMax, downSpace / downMax);
   const netPts = data.map((d, i) => {
     const x = pad + step * i + step / 2;
-    const y = baseline - (d.net || 0) * ((H - baseline - 24) / maxV) - 0; // net relative
     return [x, baseline - (d.net || 0) * scale];
   });
   const linePath = netPts.map((p, i) => `${i ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ');
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ overflow: 'visible' }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ overflow: 'hidden' }}>
       <line x1={pad} y1={baseline} x2={W - pad} y2={baseline} stroke="var(--line-2)" strokeWidth="1.5" />
       {data.map((d, i) => {
         const x = pad + step * i + step / 2;
