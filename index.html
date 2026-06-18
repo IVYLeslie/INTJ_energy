@@ -479,6 +479,36 @@ function fillPct(current) {
   return Math.max(0, Math.min(1, current / SCALE_MAX));
 }
 
+/* ---------- 任务重复频率 ---------- */
+const REPEAT_OPTIONS = [
+  { key: 'once',     label: '不重复' },
+  { key: 'daily',    label: '每天'   },
+  { key: 'weekdays', label: '工作日' },
+  { key: 'custom',   label: '自定义' },
+];
+function isRepeating(t) { return !!(t.repeat && t.repeat !== 'once'); }
+function isScheduledOn(t, date) {
+  const wd = date.getDay(); // 0=日 .. 6=六
+  switch (t.repeat) {
+    case 'daily':    return true;
+    case 'weekdays': return wd >= 1 && wd <= 5;
+    case 'custom':   return Array.isArray(t.days) && t.days.includes(wd);
+    default:         return false; // once / 未设置
+  }
+}
+// 今天是否显示/计入：重复任务看是否排到今天；一次性任务始终（它只在当天存在）
+function isActiveToday(t) { return isRepeating(t) ? isScheduledOn(t, new Date()) : true; }
+function repeatLabel(t) {
+  if (t.repeat === 'daily') return '每天';
+  if (t.repeat === 'weekdays') return '工作日';
+  if (t.repeat === 'custom') {
+    const wd = ['日','一','二','三','四','五','六'];
+    const ds = (t.days || []).slice().sort((a,b)=>a-b);
+    return ds.length ? '周' + ds.map(d => wd[d]).join('·') : '自定义';
+  }
+  return '';
+}
+
 /* ============================================================
    日期与历史（真实日期；历史来自数据库 daily_log，不再生成假数据）
    ============================================================ */
@@ -592,6 +622,7 @@ function Icon({ name, size = 22, stroke = 2, className, style }) {
     clock:   <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
     heart:   <><path d="M12 21C5 14.5 3 11.5 3 8.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 9 2.5c0 3-2 6-9 12.5Z"/></>,
     moon:    <><path d="M20 14a8 8 0 0 1-10-10 8 8 0 1 0 10 10Z"/></>,
+    repeat:  <><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></>,
   };
   return <svg {...p}>{paths[name] || null}</svg>;
 }
@@ -600,6 +631,7 @@ Object.assign(window, {
   MACARON_SWATCHES, DEFAULT_CATEGORIES, CatCtx, ptsColor,
   SEED_TASKS, ACHIEVEMENTS,
   SCALE_MAX, computeEnergy, energyMood, fillPct, Icon,
+  REPEAT_OPTIONS, isRepeating, isScheduledOn, isActiveToday, repeatLabel,
   TODAY, TODAY_KEY, TODAY_ISO, MONTH_LABELS, WEEKDAY_LABELS,
   ymdToIso, dKey, isoToKey, recentDays, computeStreak,
   isFuture, daysInMonth, firstWeekday, aggTasks, monthAgg, yearAgg,
@@ -827,6 +859,9 @@ function TaskItem({ task, onToggle, onEdit, onDelete, index = 0 }) {
           <span className="chip" style={{ padding: '3px 9px', fontSize: 11, background: 'var(--bg-2)', color: task.type === 'gain' ? 'var(--gain)' : 'var(--drain)' }}>
             {task.type === 'gain' ? '增能' : '耗能'}
           </span>
+          {isRepeating(task) && <span className="chip" style={{ padding: '3px 9px', fontSize: 11, background: 'var(--gain-tint)', color: 'var(--gain)' }}>
+            <Icon name="repeat" size={11} stroke={2.4} style={{ marginRight: 2 }} />{repeatLabel(task)}
+          </span>}
           {task.time && <span className="task-time"><Icon name="clock" size={12} stroke={2.2} style={{ verticalAlign: '-2px', marginRight: 3 }} />{task.time}</span>}
         </div>
       </div>
@@ -986,11 +1021,12 @@ function QuickAdd({ onAdd }) {
   const [type, setType] = React.useState('gain');
   const [pts, setPts] = React.useState(6);
   const [cat, setCat] = React.useState(list[0] ? list[0].id : 'hobby');
+  const [repeat, setRepeat] = React.useState('once');
   const c = ptsColor(pts);
   const submit = () => {
     if (!text.trim()) return;
-    onAdd({ title: text.trim(), type, pts, cat, time: '' });
-    setText(''); setPts(6); setType('gain');
+    onAdd({ title: text.trim(), type, pts, cat, time: '', repeat, days: [] });
+    setText(''); setPts(6); setType('gain'); // repeat 保留，方便连续添加同频率任务
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-md)', boxShadow: 'var(--sh-sm)' }}>
@@ -1011,6 +1047,12 @@ function QuickAdd({ onAdd }) {
             style={type === 'drain' ? { background: 'var(--drain)' } : null}>耗能</button>
         </div>
         <CategoryPicker value={cat} onChange={setCat} compact />
+        <select value={repeat} onChange={e => setRepeat(e.target.value)} title="重复频率"
+          style={{ padding: '8px 10px', borderRadius: 'var(--r-pill)', border: '1px solid var(--line-2)', background: 'var(--surface)', fontSize: 13, fontWeight: 600, color: repeat === 'once' ? 'var(--ink-2)' : 'var(--gain)', cursor: 'pointer' }}>
+          <option value="once">不重复</option>
+          <option value="daily">每天</option>
+          <option value="weekdays">工作日</option>
+        </select>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', color: 'var(--ink-3)' }}>
           <button onClick={() => setPts(Math.max(1, pts - 1))} style={stepBtn}>−</button>
           <span style={{ fontFamily: 'var(--font-disp)', fontWeight: 600, fontSize: 15, minWidth: 30, textAlign: 'center', color: c.deep }}>{type === 'gain' ? '+' : '−'}{pts}</span>
@@ -1325,12 +1367,17 @@ function TaskModal({ initial, onSave, onClose, onDelete }) {
   const [pts, setPts]     = React.useState(initial?.pts || 8);
   const [cat, setCat]     = React.useState(initial?.cat || 'hobby');
   const [time, setTime]   = React.useState(initial?.time || '');
+  const [repeat, setRepeat] = React.useState(initial?.repeat || 'once');
+  const [days, setDays]   = React.useState(initial?.days || []);
   const accent = type === 'gain' ? 'var(--gain)' : 'var(--drain)';
 
+  const toggleDay = (d) => setDays(ds => ds.includes(d) ? ds.filter(x => x !== d) : [...ds, d]);
   const save = () => {
     if (!title.trim()) return;
-    onSave({ ...(initial || {}), title: title.trim(), type, pts, cat, time });
+    if (repeat === 'custom' && days.length === 0) return; // 自定义需至少选一天
+    onSave({ ...(initial || {}), title: title.trim(), type, pts, cat, time, repeat, days: repeat === 'custom' ? days : [] });
   };
+  const notScheduledToday = repeat !== 'once' && !isScheduledOn({ repeat, days }, new Date());
 
   return (
     <Modal onClose={onClose}>
@@ -1366,6 +1413,34 @@ function TaskModal({ initial, onSave, onClose, onDelete }) {
 
         {/* 分类（可选择 / 自定义管理） */}
         <CategoryField value={cat} onChange={setCat} />
+
+        {/* 重复频率 */}
+        <div>
+          <label style={fieldLabel}>重复</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {REPEAT_OPTIONS.map(o => (
+              <button key={o.key} type="button" onClick={() => setRepeat(o.key)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 'var(--r-pill)', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+                  border: `1.5px solid ${repeat === o.key ? 'var(--gain)' : 'var(--line-2)'}`,
+                  background: repeat === o.key ? 'var(--gain-tint)' : 'var(--surface)', color: repeat === o.key ? 'var(--gain)' : 'var(--ink-2)', transition: 'all .15s' }}>
+                {o.key !== 'once' && <Icon name="repeat" size={13} stroke={2.2} />}{o.label}
+              </button>
+            ))}
+          </div>
+          {repeat === 'custom' && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
+              {['日','一','二','三','四','五','六'].map((w, d) => (
+                <button key={d} type="button" onClick={() => toggleDay(d)}
+                  style={{ flex: 1, padding: '9px 0', borderRadius: 'var(--r-sm)', fontSize: 13, fontWeight: 600,
+                    border: `1.5px solid ${days.includes(d) ? 'var(--gain)' : 'var(--line-2)'}`,
+                    background: days.includes(d) ? 'var(--gain)' : 'var(--surface)', color: days.includes(d) ? '#fff' : 'var(--ink-2)', transition: 'all .15s' }}>{w}</button>
+              ))}
+            </div>
+          )}
+          {repeat === 'custom' && days.length === 0
+            ? <div style={{ fontSize: 12, color: 'var(--drain)', marginTop: 10 }}>请至少选择一个星期几。</div>
+            : notScheduledToday && <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 10 }}>今天不在重复日，它会在下一个安排日出现在「今日」里。</div>}
+        </div>
 
         {/* 时间 */}
         <div>
@@ -2070,16 +2145,21 @@ async function saveRemoteLogDay(userId, iso, tasks, agg) {
 function planRollover(prevTasks, lastDateIso) {
   // 首次（无 last_date）：不归档，只把今天定为活动日
   if (!lastDateIso || lastDateIso === TODAY_ISO) return { changed: false, newTasks: prevTasks };
-  // 跨天了：把上一活动日的「已完成」任务归档，未完成的顺延到今天
+  // 跨天了：把上一活动日「已完成」的任务归档
   const done = prevTasks.filter(t => t.done);
-  const carry = prevTasks.filter(t => !t.done).map(t => ({ ...t, done: false }));
+  // 重建今天的任务：
+  //  · 重复任务 → 作为定义保留，done 重置为 false（每个安排日重生一份，不叠加）
+  //  · 一次性任务 → 未完成的顺延到今天；已完成的（已归档）移除
+  const newTasks = prevTasks
+    .filter(t => isRepeating(t) || !t.done)
+    .map(t => isRepeating(t) ? { ...t, done: false } : t);
   return {
     changed: true,
     archivedIso: lastDateIso,
     archivedKey: isoToKey(lastDateIso),
     archivedTasks: done,
     archivedAgg: aggTasks(done),
-    newTasks: carry,
+    newTasks,
   };
 }
 function friendlyAuthError(msg) {
@@ -2265,7 +2345,9 @@ function App({ session }) {
     addCat, updateCat, deleteCat,
   }), [cats, addCat, updateCat, deleteCat]);
 
-  const energy = computeEnergy(tasks, initial);
+  // 只有「今天排到」的任务计入能量与展示（重复任务按频率，一次性任务始终）
+  const activeTasks = tasks.filter(isActiveToday);
+  const energy = computeEnergy(activeTasks, initial);
 
   const fireSpark = (task, e) => {
     if (!animRef.current) return;   // 「完成任务时播放能量动效」关闭则不迸粒子
@@ -2295,7 +2377,7 @@ function App({ session }) {
   const onQuickAdd = (data) => setTasks(prev => [...prev, { ...data, id: 'u' + Date.now(), done: false }]);
   const onDelete = (id) => { setTasks(prev => prev.filter(t => t.id !== id)); setModal(null); };
 
-  const homeProps = { tasks, energy, variant, setVariant, onToggle, onEdit: setModal, onDelete, onAdd: onQuickAdd };
+  const homeProps = { tasks: activeTasks, energy, variant, setVariant, onToggle, onEdit: setModal, onDelete, onAdd: onQuickAdd };
 
   return (
     <CatCtx.Provider value={catCtxValue}>
@@ -2305,9 +2387,9 @@ function App({ session }) {
       <main className="main scroll">
         <div className="main-inner">
           {route === 'today'    && <Home {...homeProps} />}
-          {route === 'stats'    && <Stats energy={energy} tasks={tasks} logMap={logMap} />}
-          {route === 'summary'  && <Summary energy={energy} tasks={tasks} logMap={logMap} />}
-          {route === 'achieve'  && <Achievements logMap={logMap} tasks={tasks} />}
+          {route === 'stats'    && <Stats energy={energy} tasks={activeTasks} logMap={logMap} />}
+          {route === 'summary'  && <Summary energy={energy} tasks={activeTasks} logMap={logMap} />}
+          {route === 'achieve'  && <Achievements logMap={logMap} tasks={activeTasks} />}
           {route === 'settings' && <Settings initial={initial} setInitial={setInitial} prefs={prefs} setPrefs={setPrefs} />}
         </div>
       </main>
