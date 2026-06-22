@@ -266,6 +266,9 @@ input, textarea, select { font-family: inherit; color: inherit; }
 .task-meta { display: flex; align-items: center; gap: 9px; margin-top: 6px; }
 .task-time { font-size: 12px; color: var(--ink-3); font-family: var(--font-disp); }
 .task-act:hover { background: var(--bg-2); color: var(--ink); }
+.grip:hover { color: var(--ink-2); }
+.grip:active { cursor: grabbing; }
+.task[draggable="true"] { cursor: grabbing; user-select: none; }
 
 /* type stripe */
 .task-stripe { width: 4px; align-self: stretch; border-radius: 999px; flex-shrink: 0; }
@@ -623,6 +626,7 @@ function Icon({ name, size = 22, stroke = 2, className, style }) {
     heart:   <><path d="M12 21C5 14.5 3 11.5 3 8.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 9 2.5c0 3-2 6-9 12.5Z"/></>,
     moon:    <><path d="M20 14a8 8 0 0 1-10-10 8 8 0 1 0 10 10Z"/></>,
     repeat:  <><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></>,
+    grip:    <g fill="currentColor" stroke="none"><circle cx="9" cy="5" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="9" cy="19" r="1.4"/><circle cx="15" cy="5" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="15" cy="19" r="1.4"/></g>,
   };
   return <svg {...p}>{paths[name] || null}</svg>;
 }
@@ -841,10 +845,30 @@ function Delta({ type, pts, big }) {
 }
 
 /* ---------------- 任务项 ---------------- */
-function TaskItem({ task, onToggle, onEdit, onDelete, index = 0 }) {
+function TaskItem({ task, onToggle, onEdit, onDelete, index = 0, dnd }) {
   const c = ptsColor(task.pts);
+  const [armed, setArmed] = React.useState(false); // 仅按住拖柄时才允许拖动
+  const dragProps = dnd ? {
+    draggable: armed,
+    onDragStart: (e) => { e.dataTransfer.effectAllowed = 'move'; dnd.onStart(task.id); },
+    onDragEnd:   () => { setArmed(false); dnd.onEnd(); },
+    onDragOver:  (e) => { e.preventDefault(); dnd.onOver(task.id); },
+    onDragLeave: () => dnd.onLeave(task.id),
+    onDrop:      (e) => { e.preventDefault(); dnd.onDrop(e, task.id); setArmed(false); },
+  } : {};
+  const dndStyle = dnd ? {
+    ...(dnd.dragging ? { opacity: 0.4 } : {}),
+    ...(dnd.over && !dnd.dragging ? { outline: '2px dashed var(--gain)', outlineOffset: '-2px' } : {}),
+  } : {};
   return (
-    <div className={`task ${task.done ? 'done' : ''} rise`} style={{ animationDelay: `${index * 0.04}s` }}>
+    <div className={`task ${task.done ? 'done' : ''} rise`} style={{ animationDelay: `${index * 0.04}s`, ...dndStyle }} {...dragProps}>
+      {dnd && (
+        <button className="grip" aria-label="拖动排序"
+          onMouseDown={() => setArmed(true)} onMouseUp={() => setArmed(false)} onTouchStart={() => setArmed(true)}
+          style={{ width: 22, height: 30, marginLeft: -4, display: 'grid', placeItems: 'center', color: 'var(--ink-3)', cursor: 'grab', flexShrink: 0, touchAction: 'none' }}>
+          <Icon name="grip" size={16} />
+        </button>
+      )}
       <div className="task-stripe" style={{ background: `linear-gradient(${c.base}, ${c.deep})` }} />
       <button
         className={`check ${task.done ? 'checked' : ''}`}
@@ -1065,17 +1089,36 @@ function QuickAdd({ onAdd }) {
 const stepBtn = { width: 26, height: 26, borderRadius: 8, background: 'var(--bg-2)', fontWeight: 700, fontSize: 16, color: 'var(--ink-2)', display: 'grid', placeItems: 'center' };
 
 /* -------- 任务列表（待办 / 已完成 分组） -------- */
-function TaskList({ tasks, onToggle, onEdit, onDelete, columns = 1 }) {
+function TaskList({ tasks, onToggle, onEdit, onDelete, onReorder, columns = 1 }) {
   const todo = tasks.filter(t => !t.done);
   const done = tasks.filter(t => t.done);
   const grid = { display: 'grid', gridTemplateColumns: columns === 2 ? '1fr 1fr' : '1fr', gap: 10 };
+
+  // 待办列表的拖拽排序协调
+  const [dragId, setDragId] = React.useState(null);
+  const [overId, setOverId] = React.useState(null);
+  const mkDnd = onReorder ? (id) => ({
+    dragging: dragId === id,
+    over: overId === id,
+    onStart: (i) => setDragId(i),
+    onOver:  (i) => setOverId(o => (o === i ? o : i)),
+    onLeave: (i) => setOverId(o => (o === i ? null : o)),
+    onEnd:   () => { setDragId(null); setOverId(null); },
+    onDrop:  (e, targetId) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      const after = (e.clientY - r.top) > r.height / 2;
+      if (dragId && dragId !== targetId) onReorder(dragId, targetId, after);
+      setDragId(null); setOverId(null);
+    },
+  }) : null;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div>
         <SectionLabel>待办 · {todo.length}</SectionLabel>
         {todo.length === 0
           ? <div style={emptyStyle}>🌿 今天的待办都完成啦，给自己一个拥抱</div>
-          : <div style={grid}>{todo.map((t, i) => <TaskItem key={t.id} task={t} index={i} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />)}</div>}
+          : <div style={grid}>{todo.map((t, i) => <TaskItem key={t.id} task={t} index={i} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} dnd={mkDnd ? mkDnd(t.id) : undefined} />)}</div>}
       </div>
       {done.length > 0 && (
         <div>
@@ -1216,8 +1259,8 @@ function HomeDash({ tasks, energy, ...rest }) {
 /* ============================================================
    Home 容器
    ============================================================ */
-function Home({ tasks, energy, variant, setVariant, onToggle, onEdit, onDelete, onAdd }) {
-  const shared = { onToggle, onEdit, onDelete, onAdd };
+function Home({ tasks, energy, variant, setVariant, onToggle, onEdit, onDelete, onAdd, onReorder }) {
+  const shared = { onToggle, onEdit, onDelete, onAdd, onReorder };
   return (
     <div>
       <HomeTop variant={variant} setVariant={setVariant} energy={energy} />
@@ -2376,8 +2419,20 @@ function App({ session }) {
   };
   const onQuickAdd = (data) => setTasks(prev => [...prev, { ...data, id: 'u' + Date.now(), done: false }]);
   const onDelete = (id) => { setTasks(prev => prev.filter(t => t.id !== id)); setModal(null); };
+  const onReorder = useCallback((draggedId, targetId, after) => {
+    setTasks(prev => {
+      const from = prev.findIndex(t => t.id === draggedId);
+      if (from < 0) return prev;
+      const arr = [...prev];
+      const [moved] = arr.splice(from, 1);
+      let to = arr.findIndex(t => t.id === targetId);
+      if (to < 0) return prev;
+      arr.splice(after ? to + 1 : to, 0, moved);
+      return arr;
+    });
+  }, []);
 
-  const homeProps = { tasks: activeTasks, energy, variant, setVariant, onToggle, onEdit: setModal, onDelete, onAdd: onQuickAdd };
+  const homeProps = { tasks: activeTasks, energy, variant, setVariant, onToggle, onEdit: setModal, onDelete, onAdd: onQuickAdd, onReorder };
 
   return (
     <CatCtx.Provider value={catCtxValue}>
