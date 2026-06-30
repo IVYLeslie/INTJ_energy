@@ -270,6 +270,10 @@ input, textarea, select { font-family: inherit; color: inherit; }
 .grip:active { cursor: grabbing; }
 .task[draggable="true"] { cursor: grabbing; user-select: none; }
 
+.shuffle-btn { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-3); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--sh-sm); transition: transform .3s cubic-bezier(.3,.9,.3,1.4), color .15s, box-shadow .18s; }
+.shuffle-btn:hover { color: var(--gain); box-shadow: var(--sh-md); transform: rotate(-18deg); }
+.shuffle-btn:active { transform: rotate(180deg) scale(0.9); }
+
 /* type stripe */
 .task-stripe { width: 4px; align-self: stretch; border-radius: 999px; flex-shrink: 0; }
 .stripe-gain { background: linear-gradient(var(--gain-2), var(--gain)); }
@@ -627,6 +631,7 @@ function Icon({ name, size = 22, stroke = 2, className, style }) {
     moon:    <><path d="M20 14a8 8 0 0 1-10-10 8 8 0 1 0 10 10Z"/></>,
     repeat:  <><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></>,
     grip:    <g fill="currentColor" stroke="none"><circle cx="9" cy="5" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="9" cy="19" r="1.4"/><circle cx="15" cy="5" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="15" cy="19" r="1.4"/></g>,
+    shuffle: <><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></>,
   };
   return <svg {...p}>{paths[name] || null}</svg>;
 }
@@ -1089,7 +1094,7 @@ function QuickAdd({ onAdd }) {
 const stepBtn = { width: 26, height: 26, borderRadius: 8, background: 'var(--bg-2)', fontWeight: 700, fontSize: 16, color: 'var(--ink-2)', display: 'grid', placeItems: 'center' };
 
 /* -------- 任务列表（待办 / 已完成 分组） -------- */
-function TaskList({ tasks, onToggle, onEdit, onDelete, onReorder, columns = 1 }) {
+function TaskList({ tasks, onToggle, onEdit, onDelete, onReorder, onShuffle, columns = 1 }) {
   const todo = tasks.filter(t => !t.done);
   const done = tasks.filter(t => t.done);
   const grid = { display: 'grid', gridTemplateColumns: columns === 2 ? '1fr 1fr' : '1fr', gap: 10 };
@@ -1115,7 +1120,11 @@ function TaskList({ tasks, onToggle, onEdit, onDelete, onReorder, columns = 1 })
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div>
-        <SectionLabel>待办 · {todo.length}</SectionLabel>
+        <SectionLabel right={onShuffle && todo.length > 1 && (
+          <button className="shuffle-btn" onClick={onShuffle} title="随机打乱待办顺序" aria-label="随机排序">
+            <Icon name="shuffle" size={14} stroke={2.2} />
+          </button>
+        )}>待办 · {todo.length}</SectionLabel>
         {todo.length === 0
           ? <div style={emptyStyle}>🌿 今天的待办都完成啦，给自己一个拥抱</div>
           : <div style={grid}>{todo.map((t, i) => <TaskItem key={t.id} task={t} index={i} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} dnd={mkDnd ? mkDnd(t.id) : undefined} />)}</div>}
@@ -1259,8 +1268,8 @@ function HomeDash({ tasks, energy, ...rest }) {
 /* ============================================================
    Home 容器
    ============================================================ */
-function Home({ tasks, energy, variant, setVariant, onToggle, onEdit, onDelete, onAdd, onReorder }) {
-  const shared = { onToggle, onEdit, onDelete, onAdd, onReorder };
+function Home({ tasks, energy, variant, setVariant, onToggle, onEdit, onDelete, onAdd, onReorder, onShuffle }) {
+  const shared = { onToggle, onEdit, onDelete, onAdd, onReorder, onShuffle };
   return (
     <div>
       <HomeTop variant={variant} setVariant={setVariant} energy={energy} />
@@ -2431,8 +2440,22 @@ function App({ session }) {
       return arr;
     });
   }, []);
+  // 随机打乱「今日待办」的顺序（只在待办自己的位置间洗牌，其它任务不动）
+  const onShuffle = useCallback(() => {
+    setTasks(prev => {
+      const todo = prev.filter(t => isActiveToday(t) && !t.done);
+      if (todo.length < 2) return prev;
+      const shuffled = [...todo];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      let k = 0;
+      return prev.map(t => (isActiveToday(t) && !t.done) ? shuffled[k++] : t);
+    });
+  }, []);
 
-  const homeProps = { tasks: activeTasks, energy, variant, setVariant, onToggle, onEdit: setModal, onDelete, onAdd: onQuickAdd, onReorder };
+  const homeProps = { tasks: activeTasks, energy, variant, setVariant, onToggle, onEdit: setModal, onDelete, onAdd: onQuickAdd, onReorder, onShuffle };
 
   return (
     <CatCtx.Provider value={catCtxValue}>
